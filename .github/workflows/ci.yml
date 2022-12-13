@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ tls ]
+    branches: [ tls, feat_fleet_server ]
   pull_request:
     branches: [ tls ]
 
