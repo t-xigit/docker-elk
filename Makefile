@@ -1,5 +1,4 @@
 .DEFAULT_GOAL:=help
-
 COMPOSE_ALL_FILES := \
 		-f ./docker-compose.yml\
 		-f ./extensions/heartbeat/heartbeat-compose.yml\
@@ -11,11 +10,7 @@ COMPOSE_ALL_FILES := \
 		-f ./extensions/filebeat/filebeat-compose.yml\
 		-f ./extensions/metricbeat/metricbeat-compose.yml
 
-# COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.monitor.yml -f docker-compose.tools.yml -f docker-compose.nodes.yml -f docker-compose.logs.yml
-COMPOSE_MONITORING := -f docker-compose.yml -f docker-compose.monitor.yml
-COMPOSE_LOGGING := -f docker-compose.yml -f docker-compose.logs.yml
-COMPOSE_TOOLS := -f docker-compose.yml -f docker-compose.tools.yml
-COMPOSE_NODES := -f docker-compose.yml -f docker-compose.nodes.yml
+COMPOSE_FLEET := -f ./docker-compose.yml -f ./extensions/fleet/fleet-compose.yml
 ELK_SERVICES   := elasticsearch logstash kibana apm-server fleet-server
 ELK_LOG_COLLECTION := filebeat
 ELK_MONITORING := elasticsearch-exporter logstash-exporter filebeat-cluster-logs
@@ -46,7 +41,7 @@ certs:		## Generate Elasticsearch SSL Certs.
 	$(DOCKER_COMPOSE_COMMAND) up tls
 
 rm-certs:		## Remove Elasticsearch SSL Certs.
-	
+	@sudo find tls/certs/ -mindepth 1 -not -name ".*" -delete
 
 setup:		## TODO Generate Elasticsearch SSL Certs and Keystore.
 	@make certs
@@ -80,7 +75,8 @@ build:			## TODO Build ELK and all its extra components.
 
 loggy:			## Start Loggy Service
 	@make certs
-	@make elk
+	@./setup/update_fingerprint.sh
+	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} up -d
 ps:				## Show all running containers.
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} ps
 
@@ -105,6 +101,7 @@ images:			## Show all Images of ELK and all its extra components.
 prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elastic_elasticsearch-data volume)
 	@make stop && make rm
 	@docker volume prune -f --filter label=com.docker.compose.project=docker-elk
+	@make rm-certs
 
 help:       	## Show this help.
 	@echo "Make Application Docker Images and Containers using Docker-Compose files in 'docker' Dir."
