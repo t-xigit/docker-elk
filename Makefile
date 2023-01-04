@@ -32,7 +32,7 @@ else
 endif
 
 # --------------------------
-.PHONY: setup keystore certs all elk monitoring tools build down stop restart rm logs
+.PHONY: setup keystore certs all elk monitoring tools build down stop restart rm logs loggy ps
 
 keystore:		## TODO Setup Elasticsearch Keystore, by initializing passwords, and add credentials defined in `keystore.sh`.
 	$(DOCKER_COMPOSE_COMMAND) -f docker-compose.setup.yml run --rm keystore
@@ -77,6 +77,8 @@ loggy:			## Start Loggy Service
 	@make certs
 	@./setup/update_fingerprint.sh
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} up -d
+
+# Docker shortcuts when ELK is running
 ps:				## Show all running containers.
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} ps
 
@@ -102,6 +104,12 @@ prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elasti
 	@make stop && make rm
 	@docker volume prune -f --filter label=com.docker.compose.project=docker-elk
 	@make rm-certs
+	git checkout kibana/config/kibana.yml
+
+# Testing
+
+test:			## Run all tests.
+	.github/workflows/scripts/run-tests-core.sh
 
 help:       	## Show this help.
 	@echo "Make Application Docker Images and Containers using Docker-Compose files in 'docker' Dir."
