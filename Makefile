@@ -109,7 +109,7 @@ prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elasti
 # Testing
 
 test:			## Run all tests.
-	.github/workflows/scripts/run-tests-core.sh
+	.github/workflows/scripts/run-tests-loggy.sh
 
 help:       	## Show this help.
 	@echo "Make Application Docker Images and Containers using Docker-Compose files in 'docker' Dir."

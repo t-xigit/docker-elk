@@ -17,6 +17,9 @@ jobs:
 
       - name: make the loggy stack
         run: make loggy
+      
+      - name: run tests
+        run: make test
 
       - name: check the processess
         run: make ps
