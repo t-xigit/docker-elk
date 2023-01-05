@@ -8,3 +8,4 @@ jobs:
     steps:
       - checkout
       - run: make loggy
+      - run: make test TEST_ENV="docker_native"
