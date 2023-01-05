@@ -7,6 +7,4 @@ jobs:
       image: ubuntu-2004:2022.10.1
     steps:
       - checkout
-      # Whatever you want to do
-      - run: sudo apt-get update && sudo apt-get install -y cowsay
-      - run: cowsay Continuous Integration Rocks!
+      - run: make loggy
