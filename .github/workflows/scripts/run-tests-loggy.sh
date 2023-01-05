@@ -9,12 +9,13 @@ source "$(dirname ${BASH_SOURCE[0]})/lib/testing.sh"
 TEST_ENV=$1
 echo "TEST_ENV: $TEST_ENV"
 
+cid_es="$(container_id elasticsearch)"
+cid_ls="$(container_id logstash)"
+cid_kb="$(container_id kibana)"
+cid_fl="$(container_id fleet-server)"
+
 if [ "$TEST_ENV" = "docker_desktop" ]; then
     echo "Running tests on Docker Desktop"
-    cid_es="$(container_id elasticsearch)"
-    cid_ls="$(container_id logstash)"
-    cid_kb="$(container_id kibana)"
-    cid_fl="$(container_id fleet-server)"
 
     ip_es="localhost"
     ip_ls="localhost"
@@ -26,9 +27,6 @@ if [ "$TEST_ENV" = "docker_desktop" ]; then
     
 elif [ "$TEST_ENV" = "docker_native" ]; then
     echo "Running tests on native Docker"
-    cid_es="$(container_id elasticsearch)"
-    cid_ls="$(container_id logstash)"
-    cid_kb="$(container_id kibana)"
 
     ip_es="$(service_ip elasticsearch)"
     ip_ls="$(service_ip logstash)"
