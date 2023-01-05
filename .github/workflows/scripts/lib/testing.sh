@@ -114,7 +114,7 @@ function poll_ready {
 
 		was_retried=1
 		echo -n 'x' >&2
-		sleep 10
+		sleep 5
 	done
 	if ((was_retried)); then
 		# flush stderr, important in non-interactive environments (CI)

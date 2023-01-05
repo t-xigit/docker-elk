@@ -45,9 +45,10 @@ es_ca_cert="$(realpath $(dirname ${BASH_SOURCE[0]})/../../../tls/certs/ca/ca.crt
 log 'Waiting for readiness of Elasticsearch'
 poll_ready "$cid_es" $service_url_es --resolve "elasticsearch:9200:${ip_es}" --cacert "$es_ca_cert" -u 'elastic:changeme'
 
+log 'Waiting for readiness of Fleet Server'
+poll_ready "$cid_fl" "$service_url_fleet"":8220/api/status" --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
+
 log 'Waiting for readiness of Kibana'
 poll_ready "$cid_kb" "http://${ip_kb}:5601/api/status" -u 'kibana_system:changeme'
 
-log 'Waiting for readiness of Fleet Server'
-poll_ready "$cid_fl" "$service_url_fleet"":8220/api/status" --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
 
