@@ -36,7 +36,7 @@ elif [ "$TEST_ENV" = "docker_native" ]; then
     ip_fl="$(service_ip fleet-server)"
 
     service_url_es="https://elasticsearch:9200/"
-    service_url_fleet="https://fleet-server:8220/"
+    service_url_fleet="https://fleet-server"
 else
     echo "Unknown test environment: $TEST_ENV"
     exit 1
