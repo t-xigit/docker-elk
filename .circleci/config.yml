@@ -20,6 +20,9 @@ jobs:
   make-loggy:
       docker:
         - image: ubuntu-2204:2022.10.2
+          auth:
+            username: txigit  # can specify string literal values
+            password: $DOCKERHUB_PASSWORD  # or project environment variable reference
       steps:
         - checkout
         - run: ls
