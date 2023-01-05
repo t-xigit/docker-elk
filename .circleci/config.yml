@@ -23,7 +23,6 @@ jobs:
       steps:
         - checkout
         - run: ls
-        - run: cd docker-elk
         - run:
             name: "make loggy"
             command: "make loggy"
