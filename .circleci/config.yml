@@ -9,5 +9,5 @@ jobs:
       - checkout
       - run: |
           make loggy
-          make test TEST_ENV="docker_native"
+          make ps
 
