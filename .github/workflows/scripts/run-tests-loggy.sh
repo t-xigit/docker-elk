@@ -6,19 +6,50 @@ set -o pipefail
 
 source "$(dirname ${BASH_SOURCE[0]})/lib/testing.sh"
 
+TEST_ENV=$1
+echo "TEST_ENV: $TEST_ENV"
 
-cid_es="$(container_id elasticsearch)"
-cid_ls="$(container_id logstash)"
-cid_kb="$(container_id kibana)"
+if [ "$TEST_ENV" = "docker_desktop" ]; then
+    echo "Running tests on Docker Desktop"
+    cid_es="$(container_id elasticsearch)"
+    cid_ls="$(container_id logstash)"
+    cid_kb="$(container_id kibana)"
+    cid_fl="$(container_id fleet-server)"
 
-ip_es="$(service_ip elasticsearch)"
-ip_ls="$(service_ip logstash)"
-ip_kb="$(service_ip kibana)"
+    ip_es="localhost"
+    ip_ls="localhost"
+    ip_kb="localhost"
+    ip_fl="localhost"
+
+    service_url_es="https://localhost:9200/"
+    service_url_fleet="https://localhost"
+    
+elif [ "$TEST_ENV" = "docker_native" ]; then
+    echo "Running tests on native Docker"
+    cid_es="$(container_id elasticsearch)"
+    cid_ls="$(container_id logstash)"
+    cid_kb="$(container_id kibana)"
+
+    ip_es="$(service_ip elasticsearch)"
+    ip_ls="$(service_ip logstash)"
+    ip_kb="$(service_ip kibana)"
+    ip_fl="$(service_ip fleet-server)"
+
+    service_url_es="https://elasticsearch:9200/"
+    service_url_fleet="https://fleet-server:8220/"
+else
+    echo "Unknown test environment: $TEST_ENV"
+    exit 1
+fi
 
 es_ca_cert="$(realpath $(dirname ${BASH_SOURCE[0]})/../../../tls/certs/ca/ca.crt)"
 
 log 'Waiting for readiness of Elasticsearch'
-poll_ready "$cid_es" 'https://elasticsearch:9200/' --resolve "elasticsearch:9200:${ip_es}" --cacert "$es_ca_cert" -u 'elastic:changeme'
+poll_ready "$cid_es" $service_url_es --resolve "elasticsearch:9200:${ip_es}" --cacert "$es_ca_cert" -u 'elastic:changeme'
 
 log 'Waiting for readiness of Kibana'
 poll_ready "$cid_kb" "http://${ip_kb}:5601/api/status" -u 'kibana_system:changeme'
+
+log 'Waiting for readiness of Fleet Server'
+poll_ready "$cid_fl" "$service_url_fleet"":8220/api/status" --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
+

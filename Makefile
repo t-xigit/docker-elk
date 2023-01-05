@@ -10,6 +10,12 @@ COMPOSE_ALL_FILES := \
 		-f ./extensions/filebeat/filebeat-compose.yml\
 		-f ./extensions/metricbeat/metricbeat-compose.yml
 
+# Environment variables
+# This ist default value when running in docker desktop
+TEST_ENV?="docker_desktop"
+# Use this value when running on a linux host or an Github Action Runner
+# make test TEST_ENV="docker_native"
+
 COMPOSE_FLEET := -f ./docker-compose.yml -f ./extensions/fleet/fleet-compose.yml
 ELK_SERVICES   := elasticsearch logstash kibana apm-server fleet-server
 ELK_LOG_COLLECTION := filebeat
@@ -109,7 +115,8 @@ prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elasti
 # Testing
 
 test:			## Run all tests.
-	.github/workflows/scripts/run-tests-loggy.sh
+	echo "Running tests under env: ${TEST_ENV}" 
+	.github/workflows/scripts/run-tests-loggy.sh ${TEST_ENV}
 
 help:       	## Show this help.
 	@echo "Make Application Docker Images and Containers using Docker-Compose files in 'docker' Dir."
