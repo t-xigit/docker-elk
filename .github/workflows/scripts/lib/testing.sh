@@ -87,7 +87,7 @@ function poll_ready {
 	local cid=$1
 	local url=$2
 
-	local -a args=( '-s' '-D-' '-m3' '-w' '%{http_code}' "$url" )
+	local -a args=( '-v' '-D-' '-m3' '-w' '%{http_code}' "$url" )
 	if [ "$#" -ge 3 ]; then
 		args+=( ${@:3} )
 	fi
