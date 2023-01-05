@@ -19,7 +19,7 @@ jobs:
           command: "echo Hello, World!"
   make-loggy:
       docker:
-        - image: cimg/aws:2022.11
+        - image: ubuntu-2204:2022.10.2
       steps:
         - checkout
         - run: ls
