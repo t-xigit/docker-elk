@@ -8,7 +8,8 @@ jobs:
     steps:
       - checkout
       - run: make loggy
-      - run: make test TEST_ENV="docker_native"
+      - run: make build
+      - run: make test TEST_ENV="docker_desktop"
 
 workflows:
   build_and_test:
