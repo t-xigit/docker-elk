@@ -48,6 +48,12 @@ poll_ready "$cid_es" $service_url_es --resolve "elasticsearch:9200:${ip_es}" --c
 log 'Waiting for readiness of Kibana'
 poll_ready "$cid_kb" "http://${ip_kb}:5601/api/status" -u 'kibana_system:changeme'
 
+
+log 'Check Container Status for Fleet Server'
+docker container inspect $cid_fl
+log 'Check Container Status for Fleet Server'
+docker container inspect $cid_fl --format '{{ .State.Status}}'
+
 log 'Check if port is available'
 echo "-vz ${ip_fl} 8220"
 nc "-vz" "${ip_fl}" "8220"

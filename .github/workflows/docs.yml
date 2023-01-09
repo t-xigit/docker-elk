@@ -2,7 +2,7 @@ name: Documentation
 
 on:
   push:
-    branches: [ tls, feat_fleet_server ]
+    branches: [ tls ]
   pull_request:
     branches: [ tls, feat_fleet_server ]
 
