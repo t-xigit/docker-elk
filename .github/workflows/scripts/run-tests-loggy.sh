@@ -54,10 +54,7 @@ docker container inspect $cid_fl
 log 'Check Container Status for Fleet Server'
 docker container inspect $cid_fl --format '{{ .State.Status}}'
 
-# log 'Check if port is available'
-# echo "-vz ${ip_fl} 8220"
-# nc "-vz" "${ip_fl}" "8220"
-
 log 'Waiting for readiness of Fleet Server'
-poll_ready "$cid_fl" 'https://fleet-server:8220/api/status' --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
-poll_ready "$cid_fl" "${service_url_fleet}:8220/api/status" --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
+poll_ready "$cid_fl" "https://localhost:8220/api/status" --cacert "$es_ca_cert"
+# poll_ready "$cid_fl" 'https://fleet-server:8220/api/status' --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
+# poll_ready "$cid_fl" "${service_url_fleet}:8220/api/status" --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
