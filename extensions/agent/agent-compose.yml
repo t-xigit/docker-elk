@@ -1,0 +1,31 @@
+version: '3.7'
+
+services:
+  elastic-agent:
+    user: root
+    container_name: elastic-agent
+    build:
+      context: extensions/fleet/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - fleet-server:/usr/share/elastic-agent/state:Z
+      # (!) TLS certificates. Generate using the 'tls' service.
+      - ./tls/certs/ca/ca.crt:/usr/share/elastic-agent/ca.crt:ro,z
+      - ./tls/certs/fleet-server/fleet-server.crt:/usr/share/elastic-agent/fleet-server.crt:ro,Z
+      - ./tls/certs/fleet-server/fleet-server.key:/usr/share/elastic-agent/fleet-server.key:ro,Z
+    environment:
+      - FLEET_ENROLLMENT_TOKEN=<enrollment-token>
+      - FLEET_ENROLL=1
+      - FLEET_URL=<fleet-server-url>
+    # Elastic Agent does not retry failed connections to Kibana upon the initial enrollment phase.
+    restart: always
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+      - kibana
+      - fleet-server
+
+volumes:
+  elastic-agent:
