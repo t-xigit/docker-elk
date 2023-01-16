@@ -4,7 +4,7 @@ on:
   push:
     branches: [ tls ]
   pull_request:
-    branches: [ tls, feat_elastic-agent ]
+    branches: [ tls, feat_elastic_agent ]
 
 jobs:
 

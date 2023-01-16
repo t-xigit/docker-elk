@@ -2,7 +2,7 @@ name: CI-Loggy
 
 on:
   push:
-    branches: [ tls, feat_elastic-agent ]
+    branches: [ tls, feat_elastic_agent ]
   pull_request:
     branches: [ tls ]
 
