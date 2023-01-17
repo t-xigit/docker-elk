@@ -1,6 +1,7 @@
 import requests
 import os
 import jinja2
+import json
 
 cert_path = './tls/certs/ca/ca.crt'
 agent_policy_name = 'ci agent policy 1'
@@ -11,13 +12,15 @@ agent_compose_template = './extensions/agent/agent-compose.yml'
 def ping_elasticsearch(url: str, ca: str) -> dict:
     """Queries the Elasticsearch API to check if it is up and running."""
     response = requests.get(url, auth=('elastic', 'changeme'), verify=ca)
-    return response.json()
+    resp_dict = json.loads(response.text)
+    return resp_dict
 
 
-def check_certificate(path: str):
+def check_certificate(path: str) -> bool:
     """Checks if the certificate is created """
     if os.path.isfile(cert_path):
         print("Certificate exists")
+        return True
     else:
         print("Certificate does not exist")
 
@@ -25,10 +28,11 @@ def check_certificate(path: str):
 def check_elasticsearch_status(url: str, ca: str):
     """Checks the Elasticsearch status"""
     response = ping_elasticsearch(url, ca)
-    if response['tagline'] == 'You Know, for Search':
-        print("Elasticsearch is up and running")
-    else:
-        print("Elasticsearch is not running")
+    if isinstance(response, dict):
+        if response['tagline'] == 'You Know, for Search':
+            print("Elasticsearch is up and running")
+        else:
+            print("Elasticsearch is not running")
 
 
 def get_agent_policy_id(name: str, url: str) -> str:

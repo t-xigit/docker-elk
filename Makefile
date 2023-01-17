@@ -4,6 +4,7 @@ SHELL:=/bin/bash
 VENV :=./python/VENV
 PYTHON := $(VENV)/bin/python
 FLAKE8 := $(VENV)/bin/flake8
+PYTEST := $(VENV)/bin/pytest
 # Docker
 COMPOSE_ALL_FILES := \
 		-f ./docker-compose.yml\
@@ -44,15 +45,21 @@ else
 endif
 
 # --------------------------
-.PHONY: setup keystore certs all elk monitoring tools build down stop restart rm logs loggy ps pyinit pylint
+.PHONY: setup keystore certs all elk monitoring tools build down stop restart rm logs loggy ps
 
+.PHONY: pyinit
 pyinit:		## Initialize Python Virtual Environment
 		python3 -m venv $(VENV)
 		$(PYTHON) -m pip install --upgrade pip
 		$(PYTHON) -m pip install -r ./python/requirements.txt
 
+.PHONY: pylint
 pylint:		## Run pylint
-		$(FLAKE8) ./python --exclude=VENV
+		$(FLAKE8) ./python --config ./python/.flake8
+
+.PHONY: pytest
+pytest:		## Run pylint
+		$(PYTEST) ./python
 
 keystore:		## TODO Setup Elasticsearch Keystore, by initializing passwords, and add credentials defined in `keystore.sh`.
 	$(DOCKER_COMPOSE_COMMAND) -f docker-compose.setup.yml run --rm keystore

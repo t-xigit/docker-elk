@@ -39,6 +39,9 @@ jobs:
       - name: Install dependencies
         run: make pyinit
 
+      - name: Run pytest
+        run: make pytest
+
       - name: make the loggy stack
         run: make loggy
       
