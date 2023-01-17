@@ -8,8 +8,8 @@ on:
 
 jobs:
 
-  test_loggy:
-    name: Test suite for the loggy stack
+  code_linting:
+    name: Code linting
     runs-on: ubuntu-22.04
 
     steps:
@@ -24,6 +24,20 @@ jobs:
 
       - name: Run pylint
         run: make pylint
+
+  test_loggy:
+    name: Test suite for the loggy stack
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      
+      - name: Install dependencies
+        run: make pyinit
 
       - name: make the loggy stack
         run: make loggy

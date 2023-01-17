@@ -1,9 +1,11 @@
 import requests
 import os
+import jinja2
 
 cert_path = './tls/certs/ca/ca.crt'
-agent_policy_name = 'ci agent policy 15'
+agent_policy_name = 'ci agent policy 1'
 kibana_url = 'http://localhost:5601'
+agent_compose_template = './extensions/agent/agent-compose.yml'
 
 
 def ping_elasticsearch(url: str, ca: str) -> dict:
@@ -76,6 +78,21 @@ def get_enrollment_token(url: str, policy_id: str) -> str:
                 return r['api_key']
 
 
+def render_agent_compose(template_file: str, context: dict) -> str:
+    """Loads a Jinja template and returns the rendered template."""
+    if not os.path.isfile(template_file):
+        raise FileNotFoundError(f"File {template_file} does not exist")
+    path = os.path.dirname(template_file)
+    environment = jinja2.Environment(loader=jinja2.FileSystemLoader(path))
+    template = environment.get_template(os.path.basename(template_file))
+
+    deployment = template.render(FleetEnrollmentToken=context['enrollment_token'])
+    deployment_file = os.path.join(path, 'agent-compose-deploy.yml')
+    with open(deployment_file, mode='w', encoding="utf-8") as f:
+        f.write(deployment)
+    return
+
+
 check_elasticsearch_status('https://localhost:9200', cert_path)
 check_certificate(cert_path)
 create_agent_policy(agent_policy_name, 'first policy', kibana_url)
@@ -83,3 +100,5 @@ policy_id = get_agent_policy_id(agent_policy_name, kibana_url)
 print(policy_id)
 enrollment_token = get_enrollment_token(kibana_url, policy_id)
 print(enrollment_token)
+
+render_agent_compose(agent_compose_template, {'enrollment_token': enrollment_token})
