@@ -120,7 +120,7 @@ loggy:			## Start Loggy Service
 # Docker shortcuts when ELK is running
 .PHONY: ps
 ps:				## Show all running containers.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} ps
+	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} ps
 
 .PHONY: down
 down:			## TODO Down ELK and all its extra components.
