@@ -61,6 +61,10 @@ pylint:		## Run pylint
 pytest:		## Run pylint
 		$(PYTEST) ./python
 
+.PHONY: type_check
+type_check:
+		$(PYTHON) -m mypy ./python/loggy
+
 .PHONY: keystore
 keystore:		## TODO Setup Elasticsearch Keystore, by initializing passwords, and add credentials defined in `keystore.sh`.
 	$(DOCKER_COMPOSE_COMMAND) -f docker-compose.setup.yml run --rm keystore
@@ -163,10 +167,18 @@ prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elasti
 	git checkout kibana/config/kibana.yml
 
 # Testing
-
+.PHONY: test
 test:			## Run all tests.
 	echo "Running tests under env: ${TEST_ENV}" 
 	.github/workflows/scripts/run-tests-loggy.sh ${TEST_ENV}
+
+.PHONY: python_ci
+python_ci:			## Run python related CI flow
+	echo "Running tests under env: ${TEST_ENV}" 
+	@make pyinit
+	@make pylint
+	@make pytest
+	@make type_check
 
 help:       	## Show this help.
 	@echo "Make Application Docker Images and Containers using Docker-Compose files in 'docker' Dir."

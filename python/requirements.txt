@@ -3,3 +3,6 @@ flake8
 requests
 Jinja2
 pytest-mock
+mypy
+types-requests
+requests
