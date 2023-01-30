@@ -2,11 +2,28 @@ name: CI-Loggy
 
 on:
   push:
-    branches: [ tls, feat_fleet_server ]
+    branches: [ tls, feat_elastic_agent ]
   pull_request:
-    branches: [ tls ]
+    branches: [ tls, loggy ]
 
 jobs:
+
+  code_linting:
+    name: Code linting
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      
+      - name: Install dependencies
+        run: make pyinit
+
+      - name: Run pylint
+        run: make pylint
 
   test_loggy:
     name: Test suite for the loggy stack
@@ -14,12 +31,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      
+      - name: Install dependencies
+        run: make pyinit
 
       - name: make the loggy stack
         run: make loggy
       
       - name: run tests
         run: make test TEST_ENV="docker_native"
+
+      - name: Run pytest
+        run: make pytest
 
       - name: check the processes
         run: make ps
@@ -28,3 +55,5 @@ jobs:
         # Tear down. #
         #            #
         ##############
+      - name: stop the loggy stack
+        run: make prune

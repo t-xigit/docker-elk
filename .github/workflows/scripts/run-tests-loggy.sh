@@ -10,7 +10,6 @@ TEST_ENV=$1
 echo "TEST_ENV: $TEST_ENV"
 
 cid_es="$(container_id elasticsearch)"
-cid_ls="$(container_id logstash)"
 cid_kb="$(container_id kibana)"
 cid_fl="$(container_id fleet-server)"
 
@@ -29,7 +28,6 @@ elif [ "$TEST_ENV" = "docker_native" ]; then
     echo "Running tests on native Docker"
 
     ip_es="$(service_ip elasticsearch)"
-    ip_ls="$(service_ip logstash)"
     ip_kb="$(service_ip kibana)"
     ip_fl="$(service_ip fleet-server)"
 
@@ -42,9 +40,13 @@ fi
 
 es_ca_cert="$(realpath $(dirname ${BASH_SOURCE[0]})/../../../tls/certs/ca/ca.crt)"
 
+log 'Check Container Status for Elasticsearch'
+docker container inspect $cid_es
 log 'Waiting for readiness of Elasticsearch'
 poll_ready "$cid_es" $service_url_es --resolve "elasticsearch:9200:${ip_es}" --cacert "$es_ca_cert" -u 'elastic:changeme'
 
+log 'Check Container Status for Kibana'
+docker container inspect $cid_kb
 log 'Waiting for readiness of Kibana'
 poll_ready "$cid_kb" "http://${ip_kb}:5601/api/status" -u 'kibana_system:changeme'
 

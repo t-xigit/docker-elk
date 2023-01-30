@@ -1,0 +1,17 @@
+{
+  "name": "elasticsearch",
+  "cluster_name": "docker-cluster",
+  "cluster_uuid": "Ys9s6HRSQDiCzahTVy8aGQ",
+  "version": {
+      "number": "8.5.3",
+      "build_flavor": "default",
+      "build_type": "docker",
+      "build_hash": "4ed5ee9afac63de92ec98f404ccbed7d3ba9584e",
+      "build_date": "2022-12-05T18:22:22.226119656Z",
+      "build_snapshot": false,
+      "lucene_version": "9.4.2",
+      "minimum_wire_compatibility_version": "7.17.0",
+      "minimum_index_compatibility_version": "7.0.0"
+  },
+  "tagline": "You Know, for Search"
+}

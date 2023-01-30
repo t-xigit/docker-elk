@@ -1,4 +1,11 @@
 .DEFAULT_GOAL:=help
+SHELL:=/bin/bash
+# Python
+VENV :=./python/VENV
+PYTHON := $(VENV)/bin/python
+FLAKE8 := $(VENV)/bin/flake8
+PYTEST := $(VENV)/bin/pytest
+# Docker
 COMPOSE_ALL_FILES := \
 		-f ./docker-compose.yml\
 		-f ./extensions/heartbeat/heartbeat-compose.yml\
@@ -28,7 +35,7 @@ ELK_MAIN_SERVICES := ${ELK_SERVICES} ${ELK_CERTS}
 # TODO ELK_MAIN_SERVICES := ${ELK_SERVICES} ${ELK_MONITORING} ${ELK_TOOLS}
 # TODO ELK_ALL_SERVICES := ${ELK_MAIN_SERVICES} ${ELK_NODES} ${ELK_LOG_COLLECTION}
 ELK_ALL_SERVICES := ${ELK_MAIN_SERVICES} ${ELK_SETUP}
-LOGGY_SERVICES := setup elasticsearch kibana fleet-server
+LOGGY_SERVICES := setup elasticsearch kibana fleet-server tls
 
 compose_v2_not_supported = $(shell command docker compose 2> /dev/null)
 ifeq (,$(compose_v2_not_supported))
@@ -38,67 +45,105 @@ else
 endif
 
 # --------------------------
-.PHONY: setup keystore certs all elk monitoring tools build down stop restart rm logs loggy ps
 
+.PHONY: pyinit
+pyinit:		## Initialize Python Virtual Environment
+		python3 -m venv $(VENV)
+		$(PYTHON) -m pip install --upgrade pip
+		$(PYTHON) -m pip install -r ./python/requirements.txt
+
+.PHONY: pylint
+pylint:		## Run pylint
+		$(FLAKE8) ./python --config ./python/.flake8
+
+.PHONY: pytest
+pytest:		## Run pylint
+		$(PYTEST) ./python
+
+.PHONY: keystore
 keystore:		## TODO Setup Elasticsearch Keystore, by initializing passwords, and add credentials defined in `keystore.sh`.
 	$(DOCKER_COMPOSE_COMMAND) -f docker-compose.setup.yml run --rm keystore
 
+.PHONY: certs
 certs:		## Generate Elasticsearch SSL Certs.
 	$(DOCKER_COMPOSE_COMMAND) up tls
 
+.PHONY: rm-certs
 rm-certs:		## Remove Elasticsearch SSL Certs.
 	@sudo find tls/certs/ -mindepth 1 -not -name ".*" -delete
 
+.PHONY: setup
 setup:		## TODO Generate Elasticsearch SSL Certs and Keystore.
 	@make certs
 	@make keystore
 
+.PHONY: all
 all:		## TODO Start Elk and all its component (ELK, Monitoring, and Tools).
 
 # $(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} up -d --build ${ELK_MAIN_SERVICES}
 
+.PHONY: elk
 elk:		    ## TODO Start ELK.
 	$(DOCKER_COMPOSE_COMMAND) up -d --build
 
+.PHONY: up
 up:
 	@make elk
 	@echo "Visit Kibana: https://localhost:5601"
 
+.PHONY: monitoring
 monitoring:		## TODO Start ELK Monitoring.
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_MONITORING} up -d --build ${ELK_MONITORING}
 
+.PHONY: collect-docker-logs
 collect-docker-logs:		## TODO Start Filebeat that collects all Host Docker Logs and ship it to ELK
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_LOGGING} up -d --build ${ELK_LOG_COLLECTION}
 
+.PHONY: tools
 tools:		## TODO Start ELK Tools (ElastAlert, Curator).
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_TOOLS} up -d --build ${ELK_TOOLS}
 
+.PHONY: nodes
 nodes:		## TODO Start Two Extra Elasticsearch Nodes
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_NODES} up -d --build ${ELK_NODES}
 
+.PHONY: build
 build:			## TODO Build ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} build ${ELK_ALL_SERVICES}
 
+.PHONY: loggy
 loggy:			## Start Loggy Service
 	@make certs
 	@./setup/update_fingerprint.sh
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} up -d
 
 # Docker shortcuts when ELK is running
+.PHONY: ps
 ps:				## Show all running containers.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} ps
+	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} ps
 
+.PHONY: down
 down:			## TODO Down ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} down
 
+.PHONY: stop
 stop:			## **WIP** Stop ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} stop ${ELK_ALL_SERVICES}
+
+.PHONY: loggy_stop
+loggy_stop:			## **WIP** Stop ELK and all its extra components.
+	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} stop ${LOGGY_SERVICES}
 	
 restart:		## Restart ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} restart ${ELK_ALL_SERVICES}
 
+.PHONY: rm
 rm:				## Remove ELK and all its extra components containers.
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ALL_FILES)  --profile setup rm -f ${ELK_ALL_SERVICES}
+
+.PHONY: loggy_rm
+loggy_rm:				## Remove ELK and all its extra components containers.
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_FLEET)  --profile setup rm -f ${LOGGY_SERVICES}
 
 logs:			## Tail all logs with -n 1000.
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ALL_FILES) logs --follow --tail=1000 ${ELK_ALL_SERVICES}
@@ -107,7 +152,7 @@ images:			## Show all Images of ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ALL_FILES) images ${ELK_ALL_SERVICES}
 
 prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elastic_elasticsearch-data volume)
-	@make stop && make rm
+	@make loggy_stop && make loggy_rm
 	@docker volume prune -f --filter label=com.docker.compose.project=docker-elk
 	@make rm-certs
 	git checkout kibana/config/kibana.yml
