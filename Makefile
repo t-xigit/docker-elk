@@ -59,7 +59,7 @@ pylint:		## Run pylint
 
 .PHONY: pytest
 pytest:		## Run pylint
-		$(PYTEST) ./python
+		$(PYTEST) ./python --cov
 
 .PHONY: type_check
 type_check:
@@ -177,8 +177,9 @@ python_ci:			## Run python related CI flow
 	echo "Running tests under env: ${TEST_ENV}" 
 	@make pyinit
 	@make pylint
-	@make pytest
 	@make type_check
+	@make pytest
+
 
 help:       	## Show this help.
 	@echo "Make Application Docker Images and Containers using Docker-Compose files in 'docker' Dir."

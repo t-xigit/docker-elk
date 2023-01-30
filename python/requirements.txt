@@ -1,8 +1,18 @@
+
+# pytest
 pytest
+pytest-mock
+pytest-cov
+
 flake8
 requests
 Jinja2
-pytest-mock
+requests
+pyyaml
+pathlib
+click
+
+# Packages for type checking
 mypy
 types-requests
-requests
+types-PyYAML

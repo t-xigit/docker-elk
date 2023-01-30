@@ -7,11 +7,9 @@ jobs:
       image: ubuntu-2004:2022.10.1
     steps:
       - checkout
-      - run: make pyinit
-      - run: make pylint
+      - run: make python_ci
       - run: make loggy
       - run: make test TEST_ENV="docker_desktop"
-      - run: make pytest
       - run: make prune
 
 workflows:
