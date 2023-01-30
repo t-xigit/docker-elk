@@ -5,8 +5,12 @@
 ## Enroll an Elastic Agent
 
 Create an agent policy in Kibana and enroll an Elastic Agent.
-Copy the enrollment token and add it to to the agent-compose.yml, then run the following command:  
-`docker-compose --env-file .env -f extensions/agent/agent-compose.yml up`
+By executing the python script:
+
+```bash
+ python3 python/elk_api.py
+ docker-compose --env-file .env -f extensions/agent/agent-compose-deploy.yml up -d
+```
 
 ## Deployment strategies for Loggy
 
@@ -34,5 +38,3 @@ Next steps:
 - [ ] Update the agent-compose.yml to use the configuration files
 - [ ] Add python scripts to create the agent policy and enrollment token
 - [ ] Add make target for the agent-compose.yml
-
----
