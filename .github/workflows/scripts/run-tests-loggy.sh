@@ -10,7 +10,6 @@ TEST_ENV=$1
 echo "TEST_ENV: $TEST_ENV"
 
 cid_es="$(container_id elasticsearch)"
-cid_ls="$(container_id logstash)"
 cid_kb="$(container_id kibana)"
 cid_fl="$(container_id fleet-server)"
 
@@ -29,7 +28,6 @@ elif [ "$TEST_ENV" = "docker_native" ]; then
     echo "Running tests on native Docker"
 
     ip_es="$(service_ip elasticsearch)"
-    ip_ls="$(service_ip logstash)"
     ip_kb="$(service_ip kibana)"
     ip_fl="$(service_ip fleet-server)"
 
