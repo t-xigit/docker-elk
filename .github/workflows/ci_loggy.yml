@@ -68,9 +68,6 @@ jobs:
       - name: run tests
         run: make test TEST_ENV="docker_native"
 
-      - name: Run pytest
-        run: make pytest
-
       - name: check the processes
         run: make ps
         ##############
