@@ -2,6 +2,7 @@
 SHELL:=/bin/bash
 # Python
 VENV :=./python/VENV
+TMP_PATH := $(CWD)/.tmp
 PYTHON := $(VENV)/bin/python
 FLAKE8 := $(VENV)/bin/flake8
 PYTEST := $(VENV)/bin/pytest
@@ -155,6 +156,10 @@ prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elasti
 	@make loggy_stop && make loggy_rm
 	@docker volume prune -f --filter label=com.docker.compose.project=docker-elk
 	@make rm-certs
+	@rm -rf $(VENV)
+	@rm -rf $(TMP_PATH) __pycache__ .pytest_cache
+	@find . -name '*.pyc' -delete
+	@find . -name '__pycache__' -delete
 	git checkout kibana/config/kibana.yml
 
 # Testing
