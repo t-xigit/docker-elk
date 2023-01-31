@@ -7,9 +7,10 @@ import loggy.loggy as loggy
 cert_path = './tls/certs/ca/ca.crt'
 
 
-@pytest.fixture(scope="session")
-def tmp_output_dir(tmp_path_factory):
-    tmp_test_dir = tmp_path_factory.mktemp("deployments")
+@pytest.fixture
+def tmp_output_dir(tmp_path):
+    tmp_test_dir = tmp_path / "deployments"
+    tmp_test_dir.mkdir()
     return tmp_test_dir
 
 
@@ -50,5 +51,14 @@ def test_make_stack(config_yml, tmp_output_dir):
 
 def test_cli_make_stack(config_yml, tmp_output_dir):
     runner = CliRunner()
-    result = runner.invoke(loggy.make, [config_yml, '--out', tmp_output_dir, '--force', True])
+    # First call should create the folder
+    result = runner.invoke(loggy.make, [config_yml, '--out', tmp_output_dir])
+    assert result.exit_code == 0
+    assert os.path.isdir(tmp_output_dir / 'loggy_test')
+    # Second call should raise an exception
+    result = runner.invoke(loggy.make, [config_yml, '--out', tmp_output_dir])
+    assert result.exit_code == 1
+    # Third call should delete the folder and create it again
+    result = runner.invoke(loggy.make, [config_yml, '--out', tmp_output_dir, '--force'])
+    assert result.exit_code == 0
     print(result.output)

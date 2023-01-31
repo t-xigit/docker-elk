@@ -52,8 +52,7 @@ def _make_stack(config_yml: Path,
     # Create the deployment folder
     print(f"Creating stack {stack.deployment_name}")
     deploy_folder = Path(output_dir) / stack.deployment_name
-    print(force)
-    # If force is true delte the folder and create it again
+    # If force is true delete the folder and create it again
     # If force is false and the folder exists raise an exception
     # If force is false and the folder does not exist create it
     if force is True and deploy_folder.exists():
@@ -68,13 +67,16 @@ def _make_stack(config_yml: Path,
 @click.command()
 @click.argument('conf')
 @click.option('--out', help='Path to the output folder.')
-@click.option('--force', default=False, help='Overwrite the output folder if it exists.')
+@click.option('--force', is_flag=True, default=False, help='Overwrite the output folder if it exists.')
 def make(conf, out, force):
     """Create a new deployment from a YAML file"""
     click.echo(f"Creating deployment for: {conf}!")
     if out is not None:
         click.echo(f"Output folder: {default_deployment_folder}!")
-    _make_stack(config_yml=conf, output_dir=default_deployment_folder, force=force)
+        _out = Path(out)
+        _make_stack(config_yml=conf, output_dir=_out, force=force)
+    else:
+        _make_stack(config_yml=conf, force=force)
 
 
 if __name__ == '__main__':
