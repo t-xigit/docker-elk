@@ -54,6 +54,14 @@ def test_make_stack(config_yml, tmp_output_dir):
     assert loggy._make_stack(config_yml=config_yml, output_dir=tmp_output_dir, force=True)
 
 
+def test_copy_stack_files(tmp_output_dir):
+    assert loggy._copy_stack_files(output_dir=tmp_output_dir)
+    print(os.listdir(tmp_output_dir))
+    assert os.path.isfile(tmp_output_dir / 'agent' / 'Dockerfile')
+    assert os.path.isfile(tmp_output_dir / 'docker-compose.yml')
+    assert os.path.isfile(tmp_output_dir / '.env')
+
+
 def test_cli_make_stack(config_yml, tmp_output_dir):
     runner = CliRunner()
     # First call should create the folder
