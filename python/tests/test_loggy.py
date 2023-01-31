@@ -38,6 +38,11 @@ def test_load_stack(config_yml):
     assert stack.elastic_url == 'localhost'
 
 
+def test_make_stack_files(config_yml, tmp_output_dir):
+    _stack = loggy._load_stack(config_yml=config_yml)
+    assert loggy._make_stack_files(stack=_stack, output_dir=tmp_output_dir)
+
+
 def test_make_stack(config_yml, tmp_output_dir):
     assert os.path.isfile(config_yml)
     assert loggy._make_stack(config_yml=config_yml, output_dir=tmp_output_dir)
