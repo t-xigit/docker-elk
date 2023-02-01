@@ -3,7 +3,7 @@ import os.path
 from pathlib import Path
 import yaml
 import shutil
-from typing import Union
+from typing import Union, Tuple, List
 from dataclasses import dataclass
 import jinja2
 import click
@@ -73,7 +73,7 @@ def copy_file(source: Path, destination: Path) -> bool:
     return True
 
 
-def get_tree(path: Path) -> Union[list, list]:
+def get_tree(path: Path) -> Tuple[List[Path], List[Path]]:
     """Returns a list of relative files and directories in a given path"""
     rfiles = []
     rdirs = []
