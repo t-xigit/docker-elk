@@ -68,6 +68,8 @@ def copy_file(source: Path, destination: Path) -> bool:
     assert os.path.isfile(source), f"Source file {source} does not exist"
     # assert os.path.isdir(destination), f"Destination directory {destination} does not exist"
     shutil.copy(source, destination)
+    # Copy the owner, group and permissions
+    shutil.copystat(source, destination)
     shutil.copymode(source, destination)
     assert os.path.isfile(destination), f"File {source} not copied"
     return True
@@ -98,7 +100,7 @@ def _copy_stack_files(output_dir: Path) -> bool:
     assert output_dir.exists(), f"Output directory {output_dir} does not exist"
     template_dir = Path('loggy_deployment/config/templates/')
     assert template_dir.exists(), f"Template directory {template_dir} does not exist"
-    services = ['agent', 'kibana', 'elasticsearch', 'tls', 'fleet']
+    services = ['agent', 'kibana', 'elasticsearch', 'tls', 'fleet', 'setup']
     for service in services:
         # Creating a list of files and directories to create
         service_dir = template_dir / service
@@ -129,7 +131,7 @@ def _make_stack_files(stack: LoggyStack, output_dir: Path) -> bool:
     template = environment.get_template('kibana/config/kibana.yml.j2')
     kibana_config = template.render(KibanaServerName=stack.kibana_server_name)
 
-    kibana_config_file = output_dir / 'kibana.yml'
+    kibana_config_file = Path(output_dir / 'kibana' / 'config' / 'kibana.yml')
     with open(kibana_config_file, mode='w', encoding="utf-8") as f:
         f.write(kibana_config)
     # Copy compose file
@@ -140,6 +142,8 @@ def _make_stack_files(stack: LoggyStack, output_dir: Path) -> bool:
 
     executable_files = []
     executable_files.append(Path("loggy_deployment/config/templates/tls/entrypoint.sh"))
+    executable_files.append(Path("loggy_deployment/config/templates/setup/entrypoint.sh"))
+    executable_files.append(Path("loggy_deployment/config/templates/setup/update_fingerprint.sh"))
     for file in executable_files:
         make_file_executable(file)
     return True

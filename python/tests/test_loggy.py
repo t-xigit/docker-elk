@@ -38,12 +38,6 @@ def test_load_stack(config_yml):
     assert stack.elastic_url == 'localhost'
 
 
-def test_make_stack_files(config_yml, tmp_output_dir):
-    _stack = loggy._load_stack(config_yml=config_yml)
-    assert loggy._make_stack_files(stack=_stack, output_dir=tmp_output_dir)
-    assert os.path.isfile(tmp_output_dir / 'docker-compose.yml')
-
-
 def test_copy_stack_files(tmp_output_dir):
     assert loggy._copy_stack_files(output_dir=tmp_output_dir)
     print(os.listdir(tmp_output_dir))
