@@ -56,47 +56,65 @@ def _load_stack(config_yml: Path) -> LoggyStack:
     return stack
 
 
+def make_file_executable(file: Path) -> bool:
+    """Make a file executable"""
+    assert os.path.isfile(file), f"File {file} does not exist"
+    os.chmod(file, 0o755)
+    return True
+
+
+def copy_file(source: Path, destination: Path) -> bool:
+    """Copy a file from source to destination"""
+    assert os.path.isfile(source), f"Source file {source} does not exist"
+    # assert os.path.isdir(destination), f"Destination directory {destination} does not exist"
+    shutil.copy(source, destination)
+    shutil.copymode(source, destination)
+    assert os.path.isfile(destination), f"File {source} not copied"
+    return True
+
+
+def get_tree(path: Path) -> Union[list, list]:
+    """Returns a list of relative files and directories in a given path"""
+    rfiles = []
+    rdirs = []
+    # base = Path(os.path.basename(os.path.normpath(path)))
+    base = Path(path)
+    root_dir = Path(os.path.basename(os.path.normpath(base)))
+    for root, dirs, files in os.walk(path):
+        # relative_path = Path(os.path.basename(os.path.normpath(root)))
+        relative_path = Path(root)
+        relative_path = root_dir / relative_path.relative_to(base)
+        for d in dirs:
+            _d = Path(relative_path / d)
+            rdirs.append(_d)
+        for f in files:
+            _f = Path(relative_path / f)
+            rfiles.append(_f)
+    return rfiles, rdirs
+
+
 def _copy_stack_files(output_dir: Path) -> bool:
     """Copy deployment files for Loggy Stack"""
     assert output_dir.exists(), f"Output directory {output_dir} does not exist"
     template_dir = Path('loggy_deployment/config/templates/')
     assert template_dir.exists(), f"Template directory {template_dir} does not exist"
-    services = ['agent', 'kibana', 'fleet', 'elasticsearch', 'tls']
+    services = ['agent', 'kibana', 'elasticsearch', 'tls', 'fleet']
     for service in services:
+        # Creating a list of files and directories to create
         service_dir = template_dir / service
-        dir_to_create = Path(output_dir / service)
-        # Create the service directory
-        _make_sure_path_exists(dir_to_create)
+        # Add the service directory to the list of directories to create
         # Copy all files in the service directory
-        tree = list(os.walk(service_dir))
-        files = tree[0][2]
-        subdirs = tree[0][1]
-        for subdir in subdirs:
-            # Create the subdirectory
-            _make_sure_path_exists(dir_to_create / subdir)
-            # Copy all files in the subdirectory
-            files_in_subdir = list(os.walk(service_dir / subdir))[0][2]
-            for file in files_in_subdir:
-                # Copy the files
-                shutil.copy(service_dir / subdir / file, output_dir / service / subdir / file)
-                # Apply file permissions to output file
-                shutil.copymode(service_dir / subdir / file, output_dir / service / subdir / file)
-                assert os.path.isfile(output_dir / service / subdir / file), f"{file} file not copied"
+        files, dirs = get_tree(service_dir)
+        _make_sure_path_exists(output_dir / service)
 
+        for d in dirs:
+            dir_to_create = Path(output_dir / d)
+            _make_sure_path_exists(dir_to_create)
         for file in files:
             # Copy the files
-            shutil.copy(service_dir / file, output_dir / service / file)
-            # Apply file permissions to output file
-            shutil.copymode(service_dir / file, output_dir / service / file)
-            assert os.path.isfile(output_dir / service / file), f"{file} file not copied"
-
-    # Copy the docker-compose file
-    shutil.copyfile(template_dir / 'docker-compose.yml', output_dir / 'docker-compose.yml')
-    # Apply file permissions to output file
-    assert os.path.isfile(output_dir / 'docker-compose.yml'), "docker-compose.yml file not copied"
-    # Copy the .env file
-    shutil.copyfile(template_dir / '.env', output_dir / '.env')
-    assert os.path.isfile(output_dir / '.env'), ".env file not copied"
+            template_file = template_dir / file
+            output_file = output_dir / file
+            copy_file(template_file, output_file)
     return True
 
 
@@ -114,6 +132,16 @@ def _make_stack_files(stack: LoggyStack, output_dir: Path) -> bool:
     kibana_config_file = output_dir / 'kibana.yml'
     with open(kibana_config_file, mode='w', encoding="utf-8") as f:
         f.write(kibana_config)
+    # Copy compose file
+    compose_file = Path("loggy_deployment/config/templates/docker-compose.yml")
+    copy_file(compose_file, output_dir / 'docker-compose.yml')
+    env_file = Path("loggy_deployment/config/templates/.env")
+    copy_file(env_file, output_dir / '.env')
+
+    executable_files = []
+    executable_files.append(Path("loggy_deployment/config/templates/tls/entrypoint.sh"))
+    for file in executable_files:
+        make_file_executable(file)
     return True
 
 
