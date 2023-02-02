@@ -1,10 +1,8 @@
 """Tests for `cookiecutter.utils` module."""
 import stat
 import sys
-from pathlib import Path
-
 import pytest
-
+from pathlib import Path
 from loggy import utils
 
 

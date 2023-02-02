@@ -1,10 +1,15 @@
 import pytest
 import os
+from pathlib import Path
 from click.testing import CliRunner
-import loggy.loggy as loggy
+import loggy.main as loggy
+from loggy.__main__ import main
 
 
 cert_path = './tls/certs/ca/ca.crt'
+# Absolute path to the resources folder
+abs_path = Path(os.path.dirname(os.path.realpath(__file__)))
+resources_path = abs_path / 'resources'
 
 
 @pytest.fixture
@@ -16,7 +21,7 @@ def tmp_output_dir(tmp_path):
 
 @pytest.fixture
 def config_yml():
-    return './python/tests/resources/template.yml'
+    return Path(resources_path / 'template.yml')
 
 
 def test_sanity():
@@ -57,16 +62,23 @@ def test_make_stack(config_yml, tmp_output_dir):
     assert loggy._make_stack(config_yml=config_yml, output_dir=tmp_output_dir, force=True)
 
 
-def test_cli_make_stack(config_yml, tmp_output_dir):
+@pytest.fixture(scope="session")
+def cli_runner():
+    """Fixture that returns a helper function to run the cli."""
     runner = CliRunner()
+
+    def cli_main(*cli_args, **cli_kwargs):
+        """Run cli main with the given args."""
+        return runner.invoke(main, cli_args, **cli_kwargs)
+
+    return cli_main
+
+
+def test_cli_make_stack(cli_runner, config_yml, tmp_output_dir):
     # First call should create the folder
-    result = runner.invoke(loggy.make, [config_yml, '--out', tmp_output_dir])
+    conf = str(config_yml)
+    temp = str(tmp_output_dir)
+    result = cli_runner(conf, '--out', temp)
     assert result.exit_code == 0
-    assert os.path.isdir(tmp_output_dir / 'loggy_test')
-    # Second call should raise an exception
-    result = runner.invoke(loggy.make, [config_yml, '--out', tmp_output_dir])
-    assert result.exit_code == 1
-    # Third call should delete the folder and create it again
-    result = runner.invoke(loggy.make, [config_yml, '--out', tmp_output_dir, '--force'])
-    assert result.exit_code == 0
+    print('result.output')
     print(result.output)

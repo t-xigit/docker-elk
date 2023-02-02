@@ -11,8 +11,11 @@ from .utils import make_sure_path_exists,\
                    rmtree,\
                    make_executable
 
-
-default_deployment_folder = Path('loggy_deployment/deployments')
+# Absolute path to the main repo folder
+abs_path = Path(__file__).resolve().parents[2]
+# abs_path = Path(__file__).parent.absolute()
+default_deployment_folder = Path(abs_path / 'loggy_deployment/deployments')
+template_dir = Path(abs_path / 'loggy_deployment/config/templates/')
 
 
 @dataclass
@@ -84,7 +87,6 @@ def get_tree(path: Path) -> Tuple[List[Path], List[Path]]:
 def _copy_stack_files(output_dir: Path) -> bool:
     """Copy deployment files for Loggy Stack"""
     assert output_dir.exists(), f"Output directory {output_dir} does not exist"
-    template_dir = Path('loggy_deployment/config/templates/')
     assert template_dir.exists(), f"Template directory {template_dir} does not exist"
     services = ['agent', 'kibana', 'elasticsearch', 'tls', 'fleet', 'setup']
     for service in services:
@@ -109,7 +111,7 @@ def _copy_stack_files(output_dir: Path) -> bool:
 def _make_stack_files(stack: LoggyStack, output_dir: Path) -> bool:
     """Render deployment files for Loggy Stack"""
     assert os.path.isdir(output_dir), f"Output directory {output_dir} does not exist"
-    kibana_env = Path("loggy_deployment/config/templates/")
+    kibana_env = Path(template_dir)
     assert kibana_env.exists(), f"Kibana environment {kibana_env} does not exist"
 
     # Jina2 rendering needs to be done in a separate function
@@ -121,15 +123,15 @@ def _make_stack_files(stack: LoggyStack, output_dir: Path) -> bool:
     with open(kibana_config_file, mode='w', encoding="utf-8") as f:
         f.write(kibana_config)
     # Copy compose file
-    compose_file = Path("loggy_deployment/config/templates/docker-compose.yml")
+    compose_file = Path(template_dir / 'docker-compose.yml')
     copy_file(compose_file, output_dir / 'docker-compose.yml')
-    env_file = Path("loggy_deployment/config/templates/.env")
+    env_file = Path(template_dir / '.env')
     copy_file(env_file, output_dir / '.env')
 
     executable_files = []
-    executable_files.append(Path("loggy_deployment/config/templates/tls/entrypoint.sh"))
-    executable_files.append(Path("loggy_deployment/config/templates/setup/entrypoint.sh"))
-    executable_files.append(Path("loggy_deployment/config/templates/setup/update_fingerprint.sh"))
+    executable_files.append(Path(template_dir / 'tls/entrypoint.sh'))
+    executable_files.append(Path(template_dir / 'setup/entrypoint.sh'))
+    executable_files.append(Path(template_dir / 'setup/update_fingerprint.sh'))
     for file in executable_files:
         make_executable(file)
     return True
@@ -154,8 +156,7 @@ def _make_stack(config_yml: Path,
     elif force is False and deploy_folder.exists():
         raise Exception(f"Deployment folder {deploy_folder} already exists")
     # Create the folder
-    deploy_folder.mkdir(parents=True)
-    assert deploy_folder.exists(), f"Deployment folder {deploy_folder} could not be created"
+    make_sure_path_exists(deploy_folder)
     assert _copy_stack_files(deploy_folder), "Could not copy config files"
     assert _make_stack_files(stack, deploy_folder), "Could not create config files"
     return True
@@ -165,16 +166,18 @@ def _make_stack(config_yml: Path,
 @click.argument('conf')
 @click.option('--out', help='Path to the output folder.')
 @click.option('--force', is_flag=True, default=False, help='Overwrite the output folder if it exists.')
-def make(conf, out, force):
+def main(conf, out, force):
     """Create a new deployment from a YAML file"""
     click.echo(f"Creating deployment for: {conf}!")
     if out is not None:
         click.echo(f"Output folder: {default_deployment_folder}!")
         _out = Path(out)
         _make_stack(config_yml=conf, output_dir=_out, force=force)
+        return None
     else:
         _make_stack(config_yml=conf, force=force)
+        return None
 
 
 if __name__ == '__main__':
-    make()
+    main()
