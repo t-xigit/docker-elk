@@ -7,6 +7,10 @@ from typing import Union, Tuple, List
 from dataclasses import dataclass
 import jinja2
 import click
+from .utils import make_sure_path_exists,\
+                   rmtree,\
+                   make_executable
+
 
 default_deployment_folder = Path('loggy_deployment/deployments')
 
@@ -27,17 +31,6 @@ def loggy() -> str:
     return mystring
 
 
-def _make_sure_path_exists(path: "os.PathLike[str]") -> None:
-    """Ensure that a directory exists.
-    :param path: A directory tree path for creation.
-    """
-    print('Making sure path exists (creates tree if not exist): %s', path)
-    try:
-        Path(path).mkdir(parents=True, exist_ok=True)
-    except OSError as error:
-        raise OSError(f'Unable to create directory at {path}') from error
-
-
 def _load_stack(config_yml: Path) -> LoggyStack:
     """Loads the stack parameters from a YAML file"""
     assert os.path.isfile(config_yml), f"Config file {config_yml} does not exist"
@@ -54,13 +47,6 @@ def _load_stack(config_yml: Path) -> LoggyStack:
     stack.elastic_url = result['stack']['elasticsearch']['host']
     assert stack.elastic_url is not None, "Elasticsearch host must be defined"
     return stack
-
-
-def make_file_executable(file: Path) -> bool:
-    """Make a file executable"""
-    assert os.path.isfile(file), f"File {file} does not exist"
-    os.chmod(file, 0o755)
-    return True
 
 
 def copy_file(source: Path, destination: Path) -> bool:
@@ -107,11 +93,11 @@ def _copy_stack_files(output_dir: Path) -> bool:
         # Add the service directory to the list of directories to create
         # Copy all files in the service directory
         files, dirs = get_tree(service_dir)
-        _make_sure_path_exists(output_dir / service)
+        make_sure_path_exists(output_dir / service)
 
         for d in dirs:
             dir_to_create = Path(output_dir / d)
-            _make_sure_path_exists(dir_to_create)
+            make_sure_path_exists(dir_to_create)
         for file in files:
             # Copy the files
             template_file = template_dir / file
@@ -145,7 +131,7 @@ def _make_stack_files(stack: LoggyStack, output_dir: Path) -> bool:
     executable_files.append(Path("loggy_deployment/config/templates/setup/entrypoint.sh"))
     executable_files.append(Path("loggy_deployment/config/templates/setup/update_fingerprint.sh"))
     for file in executable_files:
-        make_file_executable(file)
+        make_executable(file)
     return True
 
 
@@ -164,7 +150,7 @@ def _make_stack(config_yml: Path,
     # If force is false and the folder exists raise an exception
     # If force is false and the folder does not exist create it
     if force is True and deploy_folder.exists():
-        shutil.rmtree(deploy_folder)
+        rmtree(deploy_folder)
     elif force is False and deploy_folder.exists():
         raise Exception(f"Deployment folder {deploy_folder} already exists")
     # Create the folder
