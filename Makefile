@@ -65,6 +65,14 @@ pytest:		## Run pylint
 type_check:
 		$(PYTHON) -m mypy ./python/loggy
 
+.PHONY: python_ci
+python_ci:			## Run python related CI flow
+	echo "Running tests under env: ${TEST_ENV}" 
+	@make pyinit
+	@make pylint
+	@make type_check
+	@make pytest
+
 .PHONY: keystore
 keystore:		## TODO Setup Elasticsearch Keystore, by initializing passwords, and add credentials defined in `keystore.sh`.
 	$(DOCKER_COMPOSE_COMMAND) -f docker-compose.setup.yml run --rm keystore
@@ -171,14 +179,6 @@ prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elasti
 test:			## Run all tests.
 	echo "Running tests under env: ${TEST_ENV}" 
 	.github/workflows/scripts/run-tests-loggy.sh ${TEST_ENV}
-
-.PHONY: python_ci
-python_ci:			## Run python related CI flow
-	echo "Running tests under env: ${TEST_ENV}" 
-	@make pyinit
-	@make pylint
-	@make type_check
-	@make pytest
 
 
 help:       	## Show this help.
