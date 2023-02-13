@@ -1,12 +1,14 @@
 ---
 
-loggy.deployment.name: loggy_test
-kibana.server.name: kibana
-kibana.server.host: 0.0.0.0
-
-elasticsearch.hosts: [ https://elasticsearch:9200 ]
-
-elasticsearch.username: kibana_system
-elasticsearch.password: ${KIBANA_SYSTEM_PASSWORD}
-
-elasticsearch.ssl.certificateAuthorities: [ config/ca.crt ]
+stack:
+  name: "loggy_dev"
+  version: "8.0.0"
+  kibana:
+    server_name: kibana
+    port: 5601
+  elasticsearch:
+    server_name: elasticsearch
+    host: localhost
+    port: 9200
+    username: elastic
+    password: changeme
