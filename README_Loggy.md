@@ -2,6 +2,21 @@
 
 ---
 
+## Development tools
+
+### act
+
+Let's you run GitHub Actions locally.
+- Install act: `gh extension install nektos/act`
+- Get a list of all available actions: `gh extension exec act -l`
+- Run a specific action: `gh extension exec act -j <action-name>`
+
+### Makefile
+
+Run `make help` to get a list of all available targets.
+The first thing to run is `make pyinit` to install the python dependencies.
+If it fails you have to install python3 and pip3 first.
+
 ## Enroll an Elastic Agent
 
 Create an agent policy in Kibana and enroll an Elastic Agent.
