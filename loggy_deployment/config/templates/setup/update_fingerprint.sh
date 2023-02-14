@@ -10,8 +10,6 @@ CA_PATH="${SCRIPT_DIR}/../tls/certs/ca/ca.crt"
 KIBANA_YML="${SCRIPT_DIR}/../kibana/config/kibana.yml"
 
 echo '::Get CA fingerprint for Fleet output'
-#ca_fingerprint=$(openssl x509 -fingerprint -sha256 -noout -in loggy_deployment/deployments/loggy_dev/tls/certs/ca/ca.crt | cut -d "=" -f2 | tr -d ":" | tr "[:upper:]" "[:lower:]")
-#ca_fingerprint="$(openssl x509 -fingerprint -sha256 -noout -in ${CA_PATH}) | cut -d "=" -f2 | tr -d ":" | tr "[:upper:]" "[:lower:]")"
 declare ca_fingerprint
 ca_fingerprint="$(openssl x509 -fingerprint -sha256 -noout -in ${CA_PATH} \
                 | cut -d '=' -f2 \

@@ -10,7 +10,6 @@ jobs:
       - run: make python_ci
       - run: make loggy
       - run: make test TEST_ENV="docker_desktop"
-      - run: make prune
 
 workflows:
   build_and_test:
