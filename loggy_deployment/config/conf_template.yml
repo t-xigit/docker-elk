@@ -2,7 +2,7 @@
 
 stack:
   name: "loggy_dev"
-  version: "8.0.0"
+  version: "8.5.3"
   kibana:
     server_name: kibana
     port: 5601

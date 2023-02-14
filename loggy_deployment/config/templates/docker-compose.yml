@@ -86,7 +86,6 @@ services:
     networks:
       - elk
 
-
   kibana:
     build:
       context: kibana/

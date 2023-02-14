@@ -69,6 +69,23 @@ def test_make_sure_path_exists_correctly_handle_os_error(mocker):
     assert str(err.value) == "Unable to create directory at protected_path"
 
 
+def test_assert_is_file(tmp_path):
+    """Verify correct True/False response from `utils.assert_is_file`.
+
+    Should return True if file exist.
+    Should raise AssertionError if file does not exist.
+    """
+    existing_file = Path(tmp_path, "bar")
+    existing_file.write_text("Test data")
+
+    assert utils.assert_is_file(existing_file)
+
+    non_existing_file = Path(tmp_path, "bar.txt")
+    with pytest.raises(AssertionError) as err:
+        utils.assert_is_file(non_existing_file)
+    assert str(err.value) == f"Path {non_existing_file} does not exist"
+
+
 def test_work_in(tmp_path):
     """Verify returning to original folder after `utils.work_in` use."""
     cwd = Path.cwd()

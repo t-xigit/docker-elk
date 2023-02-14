@@ -1,4 +1,7 @@
 {
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#ff0000a2"
+  },
   "python.testing.pytestArgs": [
     "python"
   ],

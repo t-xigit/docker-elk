@@ -30,7 +30,7 @@ def rmtree(path):
     shutil.rmtree(path, onerror=force_delete)
 
 
-def make_sure_path_exists(path: "os.PathLike[str]") -> None:
+def make_sure_path_exists(path: os.PathLike) -> None:
     """Ensure that a directory exists.
 
     :param path: A directory tree path for creation.
@@ -40,6 +40,16 @@ def make_sure_path_exists(path: "os.PathLike[str]") -> None:
         Path(path).mkdir(parents=True, exist_ok=True)
     except OSError as error:
         raise OSError(f"Unable to create directory at {path}") from error
+
+
+def assert_is_file(path: "os.PathLike[str]") -> bool:
+    """Check if a path is a file.
+
+    :param path: A path to check.
+    """
+    logger.debug("Checking if path is a file: %s", path)
+    assert os.path.exists(path), f"Path {path} does not exist"
+    return True
 
 
 @contextlib.contextmanager

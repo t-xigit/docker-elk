@@ -82,3 +82,4 @@ def test_cli_make_stack(cli_runner, config_yml, tmp_output_dir):
     assert result.exit_code == 0
     print('result.output')
     print(result.output)
+    print(f"Created deployent: {temp}")

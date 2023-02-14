@@ -9,7 +9,8 @@ import jinja2
 import click
 from .utils import make_sure_path_exists,\
                    rmtree,\
-                   make_executable
+                   make_executable,\
+                   assert_is_file
 
 # Absolute path to the main repo folder
 abs_path = Path(__file__).resolve().parents[2]
@@ -21,6 +22,7 @@ template_dir = Path(abs_path / 'loggy_deployment/config/templates/')
 @dataclass
 class LoggyStack:
     deployment_name: str
+    elastic_version: str = ''
     kibana_server_name: str = ''
     kibana_port: int = 0
     kibana_url: str = 'http://localhost:5601'
@@ -49,6 +51,9 @@ def _load_stack(config_yml: Path) -> LoggyStack:
     # Load Elasticsearch parameters
     stack.elastic_url = result['stack']['elasticsearch']['host']
     assert stack.elastic_url is not None, "Elasticsearch host must be defined"
+
+    # Load Elasticsearch version
+    stack.elastic_version = result['stack']['version']
     return stack
 
 
@@ -86,8 +91,8 @@ def get_tree(path: Path) -> Tuple[List[Path], List[Path]]:
 
 def _copy_stack_files(output_dir: Path) -> bool:
     """Copy deployment files for Loggy Stack"""
-    assert output_dir.exists(), f"Output directory {output_dir} does not exist"
-    assert template_dir.exists(), f"Template directory {template_dir} does not exist"
+    make_sure_path_exists(output_dir)
+    make_sure_path_exists(template_dir)
     services = ['agent', 'kibana', 'elasticsearch', 'tls', 'fleet', 'setup']
     for service in services:
         # Creating a list of files and directories to create
@@ -120,13 +125,17 @@ def _make_stack_files(stack: LoggyStack, output_dir: Path) -> bool:
     kibana_config = template.render(KibanaServerName=stack.kibana_server_name)
 
     kibana_config_file = Path(output_dir / 'kibana' / 'config' / 'kibana.yml')
+    # Render the .env file
+    env_template = environment.get_template('/.env.j2')
+    env_config = env_template.render(elastic_version=stack.elastic_version)
+    enf_file = Path(output_dir / '.env')
+    with open(enf_file, mode='w', encoding="utf-8") as f:
+        f.write(env_config)
     with open(kibana_config_file, mode='w', encoding="utf-8") as f:
         f.write(kibana_config)
     # Copy compose file
     compose_file = Path(template_dir / 'docker-compose.yml')
     copy_file(compose_file, output_dir / 'docker-compose.yml')
-    env_file = Path(template_dir / '.env')
-    copy_file(env_file, output_dir / '.env')
 
     executable_files = []
     executable_files.append(Path(template_dir / 'tls/entrypoint.sh'))
@@ -141,8 +150,9 @@ def _make_stack(config_yml: Path,
                 output_dir: Path = default_deployment_folder,
                 force: bool = False) -> bool:
     """Creates a stack from a YAML file"""
-    assert os.path.isfile(config_yml), f"Config file {config_yml} does not exist"
-    assert os.path.isdir(output_dir), f"Output directory {output_dir} does not exist"
+    # assert os.path.isfile(config_yml), f"Config file {config_yml} does not exist"
+    assert_is_file(config_yml)
+    make_sure_path_exists(output_dir)
     stack = _load_stack(config_yml)
 
     # Create the deployment folder
@@ -157,8 +167,8 @@ def _make_stack(config_yml: Path,
         raise Exception(f"Deployment folder {deploy_folder} already exists")
     # Create the folder
     make_sure_path_exists(deploy_folder)
-    assert _copy_stack_files(deploy_folder), "Could not copy config files"
-    assert _make_stack_files(stack, deploy_folder), "Could not create config files"
+    _copy_stack_files(deploy_folder)
+    _make_stack_files(stack, deploy_folder)
     return True
 
 

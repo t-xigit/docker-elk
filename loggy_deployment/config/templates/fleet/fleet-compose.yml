@@ -3,7 +3,7 @@ version: '3.7'
 services:
   fleet-server:
     build:
-      context: extensions/fleet/
+      context: fleet/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
