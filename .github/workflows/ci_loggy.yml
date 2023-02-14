@@ -15,10 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      
+        run: |
+          apt-get update && \
+          apt-get install -y python3 python3-pip python3-venv
+
       - name: Install dependencies
         run: make pyinit
 
@@ -32,10 +32,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      
+        run: |
+          apt-get update && \
+          apt-get install -y python3 python3-pip python3-venv
+
       - name: Run Init
         run: make pyinit
 
@@ -58,9 +58,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
+        run: |
+          apt-get update && \
+          apt-get install -y python3 python3-pip python3-venv
 
       - name: make the loggy stack
         run: make loggy
