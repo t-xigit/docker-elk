@@ -10,16 +10,6 @@ LOGGY := $(PYTHON) -m python.loggy		# Loggy CLI module
 LOGGY_DEV_DIR := ./loggy_deployment/deployments/loggy_dev/	# Dir where the dev files are stored
 LOGGY_DEV_COMPOSE := -f ./loggy_deployment/deployments/loggy_dev/docker-compose.yml
 LOGGY_DEV_CONFIG := ./loggy_deployment/config/conf_template.yml
-# Docker
-COMPOSE_ALL_FILES := \
-		-f ./docker-compose.yml\
-		-f ./extensions/fleet/fleet-compose.yml\
-		-f ./extensions/fleet/agent-apmserver-compose.yml\
-		-f ./extensions/enterprise-search/enterprise-search-compose.yml\
-		-f ./extensions/logspout/logspout-compose.yml\
-		-f ./extensions/curator/curator-compose.yml\
-		-f ./extensions/filebeat/filebeat-compose.yml\
-		-f ./extensions/metricbeat/metricbeat-compose.yml
 
 # Environment variables
 # This ist default value when running in docker desktop
