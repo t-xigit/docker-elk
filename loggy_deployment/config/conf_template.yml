@@ -1,0 +1,14 @@
+---
+
+stack:
+  name: "loggy_dev"
+  version: "8.5.3"
+  kibana:
+    server_name: kibana
+    port: 5601
+  elasticsearch:
+    server_name: elasticsearch
+    host: localhost
+    port: 9200
+    username: elastic
+    password: changeme

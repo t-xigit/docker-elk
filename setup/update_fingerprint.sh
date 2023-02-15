@@ -14,4 +14,3 @@ ca_fingerprint="$(openssl x509 -fingerprint -sha256 -noout -in tls/certs/ca/ca.c
 echo ' Write fingerprint to kibana.yml'
 sed -i "s/#\(ca_trusted_fingerprint:\).*/\1 ${ca_fingerprint}/g" kibana/config/kibana.yml
 git diff kibana/config/kibana.yml
-

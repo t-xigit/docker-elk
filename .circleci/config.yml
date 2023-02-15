@@ -2,19 +2,31 @@
 version: 2.1
 
 jobs:
-  build:
+  Python_CI:
+    machine:
+      image: ubuntu-2004:2022.10.1
+    steps:
+      - checkout
+      - run: make python_ci
+  Loggy_CI:
     machine:
       image: ubuntu-2004:2022.10.1
     steps:
       - checkout
       - run: make pyinit
-      - run: make pylint
       - run: make loggy
-      - run: make test TEST_ENV="docker_desktop"
-      - run: make pytest
-      - run: make prune
+      - run: make loggy-make
+      - run: make loggy-ps
+      - run: make loggy-restart
+      - run: make loggy-images
+      - run: make loggy-test TEST_ENV="docker_desktop"
+      - run: make loggy-ps
+      - run: make loggy-stop
+      - run: make loggy-start
+      - run: make loggy-prune
 
 workflows:
   build_and_test:
     jobs:
-      - build
+      - Python_CI
+      - Loggy_CI

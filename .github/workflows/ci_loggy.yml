@@ -2,28 +2,36 @@ name: CI-Loggy
 
 on:
   push:
-    branches: [ tls, feat_elastic_agent ]
+    branches: [ tls, feat_make_deployment ]
   pull_request:
     branches: [ tls, loggy ]
 
 jobs:
-
-  code_linting:
-    name: Code linting
+  python_ci:
+    name: Python CI
     runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      
-      - name: Install dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y python3 python3-pip python3-venv
+
+      - name: Run Init
         run: make pyinit
 
-      - name: Run pylint
+      - name: Run Lint
         run: make pylint
+
+      - name: Run Tests
+        run: make pytest
+
+      - name: Run Static Type Checking
+        run: make type_check
+
+      - name: Run CI Target
+        run: make python_ci
 
   test_loggy:
     name: Test suite for the loggy stack
@@ -32,28 +40,49 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      
-      - name: Install dependencies
-        run: make pyinit
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y python3 python3-pip python3-venv
 
-      - name: make the loggy stack
+      - name: Run Init
+        # This is installing the python dependencies.
+        run: make pyinit
+      
+      - name: make loggy
+        # This is just printing the help of the loggy python module.
         run: make loggy
       
-      - name: run tests
-        run: make test TEST_ENV="docker_native"
+      - name: make loggy-make
+        # This spins up the loggy stack.
+        run: make loggy-make
+      
+      - name: make loggy-ps
+        # This checks the processes.
+        run: make loggy-ps
+      
+      - name: make loggy-restart
+        # This restarts the loggy stack.
+        run: make loggy-restart
 
-      - name: Run pytest
-        run: make pytest
+      - name: make loggy-images
+        # This shows all related images.
+        run: make loggy-images
+
+      - name: run tests
+        run: make loggy-test TEST_ENV="docker_native"
 
       - name: check the processes
-        run: make ps
+        run: make loggy-ps
         ##############
         #            #
         # Tear down. #
         #            #
         ##############
       - name: stop the loggy stack
-        run: make prune
+        run: make loggy-stop
+
+      - name: start the loggy stack
+        run: make loggy-start
+
+      - name: prune the loggy stack
+        run: make loggy-prune

@@ -2,6 +2,7 @@ import requests
 import os
 import jinja2
 import json
+from typing import Union
 
 cert_path = './tls/certs/ca/ca.crt'
 agent_policy_name = 'ci agent policy 1'
@@ -23,6 +24,7 @@ def check_certificate(path: str) -> bool:
         return True
     else:
         print("Certificate does not exist")
+        return False
 
 
 def check_elasticsearch_status(url: str, ca: str):
@@ -42,7 +44,7 @@ def get_agent_policy_id(name: str, url: str) -> str:
     for policy in response.json()['items']:
         if policy['name'] == name:
             print(policy['id'])
-            return policy['id']
+    return policy['id']
 
 
 def create_agent_policy(name: str, description: str, url: str):
@@ -66,7 +68,7 @@ def create_agent_policy(name: str, description: str, url: str):
     print(response.json())
 
 
-def get_enrollment_token(url: str, policy_id: str) -> str:
+def get_enrollment_token(url: str, policy_id: str) -> Union[str, None]:
     """Gets the enrollment token"""
     Headers = {"kbn-xsrf": "xx", "Content-Type": "application/json"}
     api = url + '/api/fleet/enrollment_api_keys'
@@ -79,7 +81,10 @@ def get_enrollment_token(url: str, policy_id: str) -> str:
             # Find the enrollment token for the agent policy
             if r['policy_id'] == policy_id:
                 print(r['api_key'])
-                return r['api_key']
+        return r['api_key']
+    else:
+        print("No enrollment token found")
+        return None
 
 
 def render_agent_compose(template_file: str, context: dict) -> str:
@@ -94,15 +99,15 @@ def render_agent_compose(template_file: str, context: dict) -> str:
     deployment_file = os.path.join(path, 'agent-compose-deploy.yml')
     with open(deployment_file, mode='w', encoding="utf-8") as f:
         f.write(deployment)
-    return
+    return deployment_file
 
 
-check_elasticsearch_status('https://localhost:9200', cert_path)
-check_certificate(cert_path)
-create_agent_policy(agent_policy_name, 'first policy', kibana_url)
-policy_id = get_agent_policy_id(agent_policy_name, kibana_url)
-print(policy_id)
-enrollment_token = get_enrollment_token(kibana_url, policy_id)
-print(enrollment_token)
-
-render_agent_compose(agent_compose_template, {'enrollment_token': enrollment_token})
+# check_elasticsearch_status('https://localhost:9200', cert_path)
+# check_certificate(cert_path)
+# create_agent_policy(agent_policy_name, 'first policy', kibana_url)
+# policy_id = get_agent_policy_id(agent_policy_name, kibana_url)
+# print(policy_id)
+# enrollment_token = get_enrollment_token(kibana_url, policy_id)
+# print(enrollment_token)
+#
+# render_agent_compose(agent_compose_template, {'enrollment_token': enrollment_token})
