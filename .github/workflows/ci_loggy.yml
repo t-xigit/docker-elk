@@ -7,24 +7,6 @@ on:
     branches: [ tls, loggy ]
 
 jobs:
-
-  code_linting:
-    name: Code linting
-    runs-on: ubuntu-22.04
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        run: |
-          sudo apt-get update && \
-          sudo apt-get install -y python3 python3-pip python3-venv
-
-      - name: Install dependencies
-        run: make pyinit
-
-      - name: Run pylint
-        run: make pylint
-  
   python_ci:
     name: Python CI
     runs-on: ubuntu-22.04
@@ -62,18 +44,49 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -y python3 python3-pip python3-venv
 
-      - name: make the loggy stack
+      - name: Run Init
+        # This is installing the python dependencies.
+        run: make pyinit
+      
+      - name: make loggy
+        # This is just printing the help of the loggy python module.
         run: make loggy
       
+      - name: make loggy-make
+        # This spins up the loggy stack.
+        run: make loggy-make
+      
+      - name: make loggy-ps
+        # This checks the processes.
+        run: make loggy-ps
+      
+      - name: make loggy-restart
+        # This restarts the loggy stack.
+        run: make loggy-restart
+
+      - name: make loggy-logs
+        # This checks the logs.
+        run: make loggy-logs
+
+      - name: make loggy-images
+        # This shows all related images.
+        run: make loggy-images
+
       - name: run tests
-        run: make test TEST_ENV="docker_native"
+        run: make loggy-test TEST_ENV="docker_native"
 
       - name: check the processes
-        run: make ps
+        run: make loggy-ps
         ##############
         #            #
         # Tear down. #
         #            #
         ##############
       - name: stop the loggy stack
-        run: make prune
+        run: make loggy-stop
+
+      - name: start the loggy stack
+        run: make loggy-start
+
+      - name: prune the loggy stack
+        run: make loggy-prune

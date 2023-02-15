@@ -2,7 +2,6 @@
 SHELL:=/bin/bash
 # Python
 VENV :=./python/VENV
-TMP_PATH := $(CWD)/.tmp
 PYTHON := $(VENV)/bin/python
 FLAKE8 := $(VENV)/bin/flake8
 PYTEST := $(VENV)/bin/pytest
@@ -32,6 +31,10 @@ else
 endif
 
 # --------------------------
+
+help:       	## Show this help.
+	@echo "Create and manage a Loggy Stack"
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Python
 .PHONY: pyinit
@@ -70,6 +73,7 @@ loggy:			## 🧾Show Loggy help
 loggy-make:			## Create and start a Dev Loggy Stack
 	$(LOGGY) $(LOGGY_DEV_CONFIG) --force
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d portainer
+	# Generate TLS certs
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up tls
 	./loggy_deployment/deployments/loggy_dev/setup/update_fingerprint.sh
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d
@@ -77,6 +81,10 @@ loggy-make:			## Create and start a Dev Loggy Stack
 .PHONY: loggy-stop
 loggy-stop:			## Stop only the Loggy Stack
 	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} stop ${LOGGY_SERVICES}
+
+.PHONY: loggy-start
+loggy-start:			## TODO Down ELK and all its extra components.
+	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} start ${LOGGY_SERVICES}
 
 .PHONY: loggy-rm
 loggy-rm:				## Remove ELK and all its extra components containers.
@@ -100,46 +108,16 @@ loggy-logs:			## Tail all logs with -n 1000.
 
 .PHONY: loggy-images
 loggy-images:			## Show all Images of ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ALL_FILES) images ${ELK_ALL_SERVICES}
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) images ${LOGGY_ALL_SERVICES}
 
 .PHONY: loggy-prune
-loggy-prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elastic_elasticsearch-data volume)
-	@make loggy_stop && make loggy_rm
-	@docker volume prune -f --filter label=com.docker.compose.project=docker-elk
-	@make rm-certs
+loggy-prune:			## Remove everything from the Loggy Stack
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) --profile setup --profile development down -v
 	@rm -rf $(VENV)
-	@rm -rf $(TMP_PATH) __pycache__ .pytest_cache
 	@find . -name '*.pyc' -delete
 	@find . -name '__pycache__' -delete
-	git checkout kibana/config/kibana.yml
 
-
-##@ 🚫TODO
-
-.PHONY: certs
-certs:		## ✅Generate Elasticsearch SSL Certs.
-	$(DOCKER_COMPOSE_COMMAND) up tls
-
-.PHONY: setup
-setup:		## 🚫TODO Generate Elasticsearch SSL Certs and Keystore.
-	@make certs
-	@make keystore
-
-.PHONY: build
-build:		## 🚫TODO Build ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} build ${ELK_ALL_SERVICES}
-
-
-.PHONY: keystore
-keystore:		## 🚫TODO Setup Elasticsearch Keystore, by initializing passwords, and add credentials defined in `keystore.sh`.
-	$(DOCKER_COMPOSE_COMMAND) -f docker-compose.setup.yml run --rm keystore
-
-##@ Testing
-.PHONY: test
-test:			## Run all tests.
+.PHONY: loggy-test
+loggy-test:			## Run all tests.
 	echo "Running tests under env: ${TEST_ENV}" 
-	.github/workflows/scripts/run-tests-loggy.sh ${TEST_ENV}
-
-help:       	## Show this help.
-	@echo "Create and manage a Loggy Stack"
-	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	.github/workflows/scripts/run-tests-loggy-dev.sh ${TEST_ENV}
