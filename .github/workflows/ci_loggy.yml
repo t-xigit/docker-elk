@@ -64,10 +64,6 @@ jobs:
         # This restarts the loggy stack.
         run: make loggy-restart
 
-      - name: make loggy-logs
-        # This checks the logs.
-        run: make loggy-logs
-
       - name: make loggy-images
         # This shows all related images.
         run: make loggy-images
