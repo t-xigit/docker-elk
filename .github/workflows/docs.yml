@@ -2,9 +2,10 @@ name: Documentation
 
 on:
   push:
-    branches: [ tls ]
+    branches:
+      - "*"
   pull_request:
-    branches: [ tls, feat_elastic_agent ]
+    branches: [ loggy ]
 
 jobs:
 

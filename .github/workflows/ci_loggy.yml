@@ -2,9 +2,10 @@ name: CI-Loggy
 
 on:
   push:
-    branches: [ tls, feat_make_deployment ]
+    branches:
+      - "*"
   pull_request:
-    branches: [ tls, loggy ]
+    branches: [ loggy ]
 
 jobs:
   python_ci:
@@ -68,16 +69,13 @@ jobs:
         # This shows all related images.
         run: make loggy-images
 
+      - name: check the processes
+        run: make loggy-ps
+
       - name: run tests
         run: make loggy-test TEST_ENV="docker_native"
 
-      - name: check the processes
-        run: make loggy-ps
-        ##############
-        #            #
         # Tear down. #
-        #            #
-        ##############
       - name: stop the loggy stack
         run: make loggy-stop
 
