@@ -19,7 +19,7 @@ jobs:
       - run: make loggy-ps
       - run: make loggy-restart
       - run: make loggy-images
-      - run: make loggy-test TEST_ENV="docker_native"
+      - run: make loggy-test TEST_ENV="docker_desktop"
       - run: make loggy-ps
       - run: make loggy-stop
       - run: make loggy-start
