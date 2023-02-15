@@ -1,6 +1,17 @@
 version: '3.7'
 
 services:
+  # Portrainer only used for development
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - 9443:9443
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    profiles:
+      - development
 
   # The 'tls' service runs a one-off script which initializes TLS certificates and
   # private keys for all components of the stack inside the local tls/ directory.
@@ -152,3 +163,5 @@ volumes:
   setup:
   elasticsearch:
   fleet-server:
+  portainer_data:
+

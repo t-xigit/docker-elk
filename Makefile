@@ -17,16 +17,12 @@ TEST_ENV?="docker_desktop"
 # Use this value when running on a linux host or an Github Action Runner
 # make test TEST_ENV="docker_native"
 
-COMPOSE_FLEET := -f ./docker-compose.yml -f ./extensions/fleet/fleet-compose.yml
-ELK_SERVICES   := elasticsearch kibana fleet-server
-ELK_SETUP := setup
-ELK_CERTS := tls
-ELK_NODES := elasticsearch-1 elasticsearch-2
-ELK_MAIN_SERVICES := ${ELK_SERVICES} ${ELK_CERTS}
-# TODO ELK_MAIN_SERVICES := ${ELK_SERVICES} ${ELK_MONITORING} ${ELK_TOOLS}
-# TODO ELK_ALL_SERVICES := ${ELK_MAIN_SERVICES} ${ELK_NODES} ${ELK_LOG_COLLECTION}
-ELK_ALL_SERVICES := ${ELK_MAIN_SERVICES} ${ELK_SETUP}
-LOGGY_SERVICES := setup elasticsearch kibana fleet-server tls
+# Docker Services
+LOGGY_SERVICES   := elasticsearch kibana fleet-server
+LOGGY_SETUP := setup
+LOGGY_CERTS := tls
+LOGGY_MONITORING := portainer
+LOGGY_ALL_SERVICES := ${LOGGY_SERVICES} ${LOGGY_SETUP} ${LOGGY_CERTS} ${LOGGY_MONITORING}
 
 compose_v2_not_supported = $(shell command docker compose 2> /dev/null)
 ifeq (,$(compose_v2_not_supported))
@@ -65,51 +61,49 @@ python_ci:		## ✅Run all of the above
 	@make pytest
 
 ##@ Loggy
-.PHONY: loggy
-loggy:			## Start Loggy Service
-	@make certs
-	@./setup/update_fingerprint.sh
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} up -d
 
-.PHONY: loggy_dev
-loggy_dev:			## Create and start a Dev Loggy Stack
+.PHONY: loggy
+loggy:			## 🧾Show Loggy help
+	$(LOGGY) --help
+
+.PHONY: loggy-make
+loggy-make:			## Create and start a Dev Loggy Stack
 	$(LOGGY) $(LOGGY_DEV_CONFIG) --force
-	@echo LOGGY_DEV_COMPOSE: $(LOGGY_DEV_COMPOSE)
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d portainer
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up tls
 	./loggy_deployment/deployments/loggy_dev/setup/update_fingerprint.sh
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d
 
-.PHONY: loggy_stop
-loggy_stop:			## **WIP** Stop ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} stop ${LOGGY_SERVICES}
+.PHONY: loggy-stop
+loggy-stop:			## Stop only the Loggy Stack
+	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} stop ${LOGGY_SERVICES}
+
+.PHONY: loggy-rm
+loggy-rm:				## Remove ELK and all its extra components containers.
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE)  --profile setup rm -f ${LOGGY_SERVICES}
 
 # Docker shortcuts when ELK is running
-.PHONY: ps
-ps:				## Show all running containers.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_FLEET} ps
+.PHONY: loggy-ps
+loggy-ps:				## Show all running containers.
+	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} ps
 
-.PHONY: down
-down:			## TODO Down ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} down
+.PHONY: loggy-down
+loggy-down:			## TODO Down ELK and all its extra components.
+	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} down
 
-.PHONY: stop
-stop:			## **WIP** Stop ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} stop ${ELK_ALL_SERVICES}
+loggy-restart:		## Restart ELK and all its extra components.
+	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} restart ${LOGGY_SERVICES}
 
-restart:		## Restart ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_ALL_FILES} restart ${ELK_ALL_SERVICES}
+.PHONY: loggy-logs
+loggy-logs:			## Tail all logs with -n 1000.
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) logs --follow --tail=1000 ${LOGGY_SERVICES}
 
-.PHONY: rm
-rm:				## Remove ELK and all its extra components containers.
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ALL_FILES)  --profile setup rm -f ${ELK_ALL_SERVICES}
-
-logs:			## Tail all logs with -n 1000.
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ALL_FILES) logs --follow --tail=1000 ${ELK_ALL_SERVICES}
-
-images:			## Show all Images of ELK and all its extra components.
+.PHONY: loggy-images
+loggy-images:			## Show all Images of ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ALL_FILES) images ${ELK_ALL_SERVICES}
 
-prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elastic_elasticsearch-data volume)
+.PHONY: loggy-prune
+loggy-prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elastic_elasticsearch-data volume)
 	@make loggy_stop && make loggy_rm
 	@docker volume prune -f --filter label=com.docker.compose.project=docker-elk
 	@make rm-certs
@@ -119,15 +113,12 @@ prune:			## Remove ELK Containers and Delete ELK-related Volume Data (the elasti
 	@find . -name '__pycache__' -delete
 	git checkout kibana/config/kibana.yml
 
-.PHONY: certs
-certs:		## ✅Generate Elasticsearch SSL Certs.
-	$(DOCKER_COMPOSE_COMMAND) up tls
 
 ##@ 🚫TODO
 
-.PHONY: loggy_rm
-loggy_rm:				## Remove ELK and all its extra components containers.
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_FLEET)  --profile setup rm -f ${LOGGY_SERVICES}
+.PHONY: certs
+certs:		## ✅Generate Elasticsearch SSL Certs.
+	$(DOCKER_COMPOSE_COMMAND) up tls
 
 .PHONY: setup
 setup:		## 🚫TODO Generate Elasticsearch SSL Certs and Keystore.
