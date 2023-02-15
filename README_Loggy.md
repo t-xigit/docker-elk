@@ -7,6 +7,7 @@
 ### act
 
 Let's you run GitHub Actions locally.
+
 - Install act: `gh extension install nektos/act`
 - Get a list of all available actions: `gh extension exec act -l`
 - Run a specific action: `gh extension exec act -j <action-name>`
