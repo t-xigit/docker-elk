@@ -59,6 +59,9 @@ function service_ip {
 	local -i was_retried=0
 	# retry for max 10s (5*2s)
 	for _ in $(seq 1 5); do
+		echo "Debug: $svc $cid" >&2
+		debug="$(docker container inspect "$cid" --format '{{ (index .NetworkSettings.Networks)}}')"
+		echo "Debug: $debug" >&2
 		ip="$(docker container inspect "$cid" --format '{{ (index .NetworkSettings.Networks "loggy_dev_elk").IPAddress }}')"
 		if [ -n "$ip" ]; then
 			break
