@@ -22,7 +22,7 @@ if [ "$TEST_ENV" = "docker_desktop" ]; then
     ip_fl="localhost"
 
     service_url_es="https://localhost:9200/"
-    service_url_fleet="https://localhost"
+    service_url_fleet="https://localhost:8220/api/status"
     
 elif [ "$TEST_ENV" = "docker_native" ]; then
     echo "Running tests on native Docker"
@@ -31,8 +31,8 @@ elif [ "$TEST_ENV" = "docker_native" ]; then
     ip_kb="$(service_ip kibana)"
     ip_fl="$(service_ip fleet-server)"
 
-    service_url_es="https://elasticsearch:9200/"
-    service_url_fleet="https://fleet-server"
+    service_url_es='https://elasticsearch:9200/'
+    service_url_fleet='https://fleet-server:8220/api/status'
 else
     echo "Unknown test environment: $TEST_ENV"
     exit 1
@@ -50,16 +50,7 @@ docker container inspect $cid_kb
 log 'Waiting for readiness of Kibana'
 poll_ready "$cid_kb" "http://${ip_kb}:5601/api/status" -u 'kibana_system:changeme'
 
-
 log 'Check Container Status for Fleet Server'
 docker container inspect $cid_fl
-log 'Check Container Status for Fleet Server'
-docker container inspect $cid_fl --format '{{ .State.Status}}'
-
 log 'Waiting for readiness of Fleet Server'
-if [ "$TEST_ENV" = "docker_native" ]; then
-    poll_ready "$cid_fl" 'https://fleet-server:8220/api/status' --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"
-else
-    # Docker Desktop can't resolve the service name, so we need to use localhost
-    poll_ready "$cid_fl" "https://localhost:8220/api/status" --cacert "$es_ca_cert"
-fi
+poll_ready "$cid_fl" $service_url_fleet --resolve "fleet-server:8220:${ip_fl}" --cacert "$es_ca_cert"

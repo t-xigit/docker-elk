@@ -18,6 +18,11 @@ Run `make help` to get a list of all available targets.
 The first thing to run is `make pyinit` to install the python dependencies.
 If it fails you have to install python3 and pip3 first.
 
+To create a Loggy Stack run:  
+`make loggy-make`
+To force a rebuild of the stack run:
+`sudo make loggy-make`
+
 ## Enroll an Elastic Agent
 
 Create an agent policy in Kibana and enroll an Elastic Agent.
