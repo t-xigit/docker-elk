@@ -94,10 +94,22 @@ services:
       # Use single node discovery in order to disable production mode and avoid bootstrap checks.
       # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.type: single-node
+    healthcheck:
+          test:
+            [
+              "CMD-SHELL",
+              "curl -v --cacert /usr/share/elasticsearch/config/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+            ]
+          interval: 10s
+          timeout: 10s
+          retries: 120
     networks:
       - elk
 
   kibana:
+    depends_on:
+      elasticsearch:
+            condition: service_healthy
     build:
       context: kibana/
       args:
@@ -114,10 +126,21 @@ services:
       KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
     networks:
       - elk
-    depends_on:
-      - elasticsearch
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
 
   fleet-server:
+    depends_on:
+      kibana:
+          condition: service_healthy
     build:
       context: fleet/
       args:
@@ -151,9 +174,6 @@ services:
     restart: on-failure
     networks:
       - elk
-    depends_on:
-      - elasticsearch
-      - kibana
 
 networks:
   elk:
