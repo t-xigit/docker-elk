@@ -21,8 +21,8 @@ if [ "$TEST_ENV" = "docker_desktop" ]; then
     ip_kb="localhost"
     ip_fl="localhost"
 
-    service_url_es="https://localhost:9200/"
-    service_url_fleet="https://localhost:8220/api/status"
+    service_url_es='https://localhost:9200/'
+    service_url_fleet='https://localhost:8220/api/status'
     
 elif [ "$TEST_ENV" = "docker_native" ]; then
     echo "Running tests on native Docker"
