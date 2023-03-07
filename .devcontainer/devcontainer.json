@@ -30,7 +30,16 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-		"postCreateCommand": "uname -a && make pyinit"
+		"postCreateCommand": "uname -a && make pyinit",
+		"customizations": {
+			"vscode": {
+				"extensions": [
+					"ms-vscode.remote-server",
+					"cschleiden.vscode-github-actions",
+					"circleci.circleci"
+				]
+			}
+		}
 
 	// Configure tool-specific properties.
 	// "customizations": {},
