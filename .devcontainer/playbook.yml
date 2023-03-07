@@ -1,0 +1,28 @@
+---
+# Ansible Playbook to create a EC2 instance and bring up ELK Stack in docker
+# When running the first time export this variable:
+# export ANSIBLE_HOST_KEY_CHECKING=False
+# ansible-galaxy collection install community.docker
+- name: Configure Codespace
+  hosts: localhost
+  connection: local
+  remote_user: vscode
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Install aptitude
+      ansible.builtin.apt:
+        name: aptitude=0.8.13-3ubuntu1
+        state: present
+        update_cache: true
+      tags:
+        - ec2-setup
+    # This is needed to run Elastic Stack in Docker
+    - name: Apply fix for Java Memory Error
+      ansible.posix.sysctl:
+        name: vm.max_map_count
+        value: 262144
+        sysctl_set: true
+        state: present
+        reload: true

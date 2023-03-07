@@ -10,6 +10,7 @@
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/powershell:1": {},
 		"ghcr.io/devcontainers/features/python:1": {},
+		"ghcr.io/devcontainers/features/sshd:1": {},
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
 		"ghcr.io/devcontainers-contrib/features/ansible:2": {},
 		"ghcr.io/devcontainers-contrib/features/flake8:1": {},
@@ -30,13 +31,14 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-		"postCreateCommand": "uname -a && make pyinit",
+		"postCreateCommand": "./postCreateCommand.sh",
 		"customizations": {
 			"vscode": {
 				"extensions": [
 					"ms-vscode.remote-server",
 					"cschleiden.vscode-github-actions",
-					"circleci.circleci"
+					"circleci.circleci",
+					"GitHub.copilot"
 				]
 			}
 		}
