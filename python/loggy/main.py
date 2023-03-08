@@ -4,7 +4,6 @@ from pathlib import Path
 import yaml
 import shutil
 from typing import Union, Tuple, List
-from dataclasses import dataclass
 import jinja2
 import click
 from .utils import make_sure_path_exists,\
@@ -19,42 +18,47 @@ default_deployment_folder = Path(abs_path / 'loggy_deployment/deployments')
 template_dir = Path(abs_path / 'loggy_deployment/config/templates/')
 
 
-@dataclass
+# Class for the Stack
 class LoggyStack:
-    deployment_name: str
-    elastic_version: str = ''
-    kibana_server_name: str = ''
-    kibana_port: int = 0
-    kibana_url: str = 'http://localhost:5601'
-    elastic_url: Union[str, None] = None
-    # elastic_ca: str
+    def __init__(self, config_yml: Path, output_dir: Path):
+        self.config_yml: Path = config_yml
+        assert_is_file(self.config_yml)
+        self.name: str = ''
+        self.output_dir: Path = output_dir
+        self.elastic_version: str = ''
+        self.kibana_server_name: str = ''
+        self.kibana_port: int = 0
+        self.kibana_url: str = 'http://localhost:5601'
+        self.elastic_url: Union[str, None] = None
+        self.elastic_ca: Path | None = None
+        self._load_stack()
+
+    def _load_stack(self) -> bool:
+        """Loads the stack parameters from a YAML file"""
+        config_yml = self.config_yml
+        stack = self
+        # Load the config file
+        result = yaml.safe_load(open(config_yml))
+        # Create a LoggyStack object
+        stack.name = result['stack']['name']
+        # Load Kibana parameters
+        stack.kibana_port = result['stack']['kibana']['port']
+        assert stack.kibana_port > 0, "Kibana port must be greater than 0"
+        stack.kibana_server_name = result['stack']['kibana']['server_name']
+
+        # Load Elasticsearch parameters
+        stack.elastic_url = result['stack']['elasticsearch']['host']
+        assert stack.elastic_url is not None, "Elasticsearch host must be defined"
+
+        # Load Elasticsearch version
+        stack.elastic_version = result['stack']['version']
+        return True
 
 
 def loggy() -> str:
     mystring = "Hello from loggy!"
     print(mystring)
     return mystring
-
-
-def _load_stack(config_yml: Path) -> LoggyStack:
-    """Loads the stack parameters from a YAML file"""
-    assert os.path.isfile(config_yml), f"Config file {config_yml} does not exist"
-    # Load the config file
-    result = yaml.safe_load(open(config_yml))
-    # Create a LoggyStack object
-    stack = LoggyStack(deployment_name=result['stack']['name'])
-    # Load Kibana parameters
-    stack.kibana_port = result['stack']['kibana']['port']
-    assert stack.kibana_port > 0, "Kibana port must be greater than 0"
-    stack.kibana_server_name = result['stack']['kibana']['server_name']
-
-    # Load Elasticsearch parameters
-    stack.elastic_url = result['stack']['elasticsearch']['host']
-    assert stack.elastic_url is not None, "Elasticsearch host must be defined"
-
-    # Load Elasticsearch version
-    stack.elastic_version = result['stack']['version']
-    return stack
 
 
 def copy_file(source: Path, destination: Path) -> bool:
@@ -153,11 +157,13 @@ def _make_stack(config_yml: Path,
     # assert os.path.isfile(config_yml), f"Config file {config_yml} does not exist"
     assert_is_file(config_yml)
     make_sure_path_exists(output_dir)
-    stack = _load_stack(config_yml)
+    stack = LoggyStack(config_yml, output_dir)
 
     # Create the deployment folder
-    print(f"Creating stack {stack.deployment_name}")
-    deploy_folder = Path(output_dir) / stack.deployment_name
+    print(f"Creating stack {stack.name}")
+    deploy_folder = Path(output_dir) / stack.name
+    # Set the CA path of the stack
+    stack.elastic_ca = deploy_folder / 'tls' / 'ca'
     # If force is true delete the folder and create it again
     # If force is false and the folder exists raise an exception
     # If force is false and the folder does not exist create it

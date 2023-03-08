@@ -36,9 +36,9 @@ def test_loggy_sanity(capfd):
 
 
 def test_load_stack(config_yml):
-    stack = loggy._load_stack(config_yml=config_yml)
+    stack = loggy.LoggyStack(config_yml=config_yml, output_dir=tmp_output_dir)
     assert isinstance(stack, loggy.LoggyStack)
-    assert stack.deployment_name == 'loggy_test'
+    assert stack.name == 'loggy_test'
     assert stack.kibana_port == 5601
     assert stack.elastic_url == 'localhost'
 
