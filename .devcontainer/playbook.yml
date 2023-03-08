@@ -1,0 +1,44 @@
+---
+# Ansible Playbook to create a EC2 instance and bring up ELK Stack in docker
+# When running the first time export this variable:
+# export ANSIBLE_HOST_KEY_CHECKING=False
+# ansible-galaxy collection install community.docker
+- name: Configure Codespace
+  hosts: localhost
+  connection: local
+  remote_user: vscode
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Install aptitude
+      ansible.builtin.apt:
+        name: aptitude=0.8.13-3ubuntu1
+        state: present
+        update_cache: true
+
+    - name: ZSH Auto suggestions
+      ansible.builtin.apt:
+        name: zsh-autosuggestions
+        state: present
+
+    - name: ZSH Autocomplete for GH CLI
+      ansible.builtin.shell: 'gh completion -s zsh > /usr/local/share/zsh/site-functions/_gh'
+
+    - name: Ensure .zshrc flags are present
+      ansible.builtin.blockinfile:
+        path: /home/vscode/.zshrc
+        block: |
+          # Enable ZSH Autocomplete for GH CLI
+          autoload -U compinit
+          compinit
+        insertafter: EOF
+      
+    # This is needed to run Elastic Stack in Docker
+    - name: Apply fix for Java Memory Error
+      ansible.posix.sysctl:
+        name: vm.max_map_count
+        value: 262144
+        sysctl_set: true
+        state: present
+        reload: true
