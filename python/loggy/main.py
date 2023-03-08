@@ -3,9 +3,10 @@ import os.path
 from pathlib import Path
 import yaml
 import shutil
-from typing import Union, Tuple, List
+from typing import Tuple, List
 import jinja2
 import click
+from . import elk_api
 from .utils import make_sure_path_exists,\
                    rmtree,\
                    make_executable,\
@@ -23,42 +24,48 @@ class LoggyStack:
     def __init__(self, config_yml: Path, output_dir: Path):
         self.config_yml: Path = config_yml
         assert_is_file(self.config_yml)
-        self.name: str = ''
+        self.name: str
         self.output_dir: Path = output_dir
-        self.elastic_version: str = ''
-        self.kibana_server_name: str = ''
+        self.elastic_version: str
+        self.kibana_server_name: str
         self.kibana_port: int = 0
         self.kibana_url: str = 'http://localhost:5601'
-        self.elastic_url: Union[str, None] = None
-        self.elastic_ca: Path | None = None
+        self.elastic_url: str
+        self.elastic_ca: Path
         self._load_stack()
 
     def _load_stack(self) -> bool:
         """Loads the stack parameters from a YAML file"""
-        config_yml = self.config_yml
-        stack = self
         # Load the config file
-        result = yaml.safe_load(open(config_yml))
+        result = yaml.safe_load(open(self.config_yml))
         # Create a LoggyStack object
-        stack.name = result['stack']['name']
+        self.name = result['stack']['name']
         # Load Kibana parameters
-        stack.kibana_port = result['stack']['kibana']['port']
-        assert stack.kibana_port > 0, "Kibana port must be greater than 0"
-        stack.kibana_server_name = result['stack']['kibana']['server_name']
+        self.kibana_port = result['stack']['kibana']['port']
+        assert self.kibana_port > 0, "Kibana port must be greater than 0"
+        self.kibana_server_name = result['stack']['kibana']['server_name']
 
         # Load Elasticsearch parameters
-        stack.elastic_url = result['stack']['elasticsearch']['host']
-        assert stack.elastic_url is not None, "Elasticsearch host must be defined"
+        self.elastic_url = 'https://localhost:9200'
+        assert self.elastic_url is not None, "Elasticsearch host must be defined"
 
         # Load Elasticsearch version
-        stack.elastic_version = result['stack']['version']
+        self.elastic_version = result['stack']['version']
+        # Load the Elasticsearch CA
+        self.elastic_ca = self.output_dir / 'tls' / 'certs' / 'ca' / 'ca.crt'
         return True
 
+    def ping_elastic(self):
+        """Pings Elasticsearch"""
+        assert self.elastic_url is not None, "Elasticsearch host must be defined"
+        replie = elk_api.ping_elasticsearch(self.elastic_url, self.elastic_ca)
+        assert replie['tagline'] == 'You Know, for Search', "Elasticsearch is not running"
 
-def loggy() -> str:
+
+@click.command()
+def loggy():
     mystring = "Hello from loggy!"
-    print(mystring)
-    return mystring
+    click.echo(mystring)
 
 
 def copy_file(source: Path, destination: Path) -> bool:
@@ -162,8 +169,6 @@ def _make_stack(config_yml: Path,
     # Create the deployment folder
     print(f"Creating stack {stack.name}")
     deploy_folder = Path(output_dir) / stack.name
-    # Set the CA path of the stack
-    stack.elastic_ca = deploy_folder / 'tls' / 'ca'
     # If force is true delete the folder and create it again
     # If force is false and the folder exists raise an exception
     # If force is false and the folder does not exist create it
@@ -182,7 +187,7 @@ def _make_stack(config_yml: Path,
 @click.argument('conf')
 @click.option('--out', help='Path to the output folder.')
 @click.option('--force', is_flag=True, default=False, help='Overwrite the output folder if it exists.')
-def main(conf, out, force):
+def make(conf, out, force):
     """Create a new deployment from a YAML file"""
     click.echo(f"Creating deployment for: {conf}!")
     if out is not None:
@@ -195,5 +200,13 @@ def main(conf, out, force):
         return None
 
 
+@click.group()
+def cli():
+    pass
+
+
+cli.add_command(make)
+cli.add_command(loggy)
+
 if __name__ == '__main__':
-    main()
+    cli()

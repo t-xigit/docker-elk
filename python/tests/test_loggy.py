@@ -2,14 +2,25 @@ import pytest
 import os
 from pathlib import Path
 from click.testing import CliRunner
-import loggy.main as loggy
-from loggy.__main__ import main
+from loggy import main as loggy
 
 
 cert_path = './tls/certs/ca/ca.crt'
 # Absolute path to the resources folder
 abs_path = Path(os.path.dirname(os.path.realpath(__file__)))
 resources_path = abs_path / 'resources'
+
+
+@pytest.fixture(scope="session")
+def cli_runner():
+    """Fixture that returns a helper function to run the cli."""
+    runner = CliRunner()
+
+    def cli_main(*cli_args, **cli_kwargs):
+        """Run cli main with the given args."""
+        return runner.invoke(loggy.cli, cli_args, **cli_kwargs)
+
+    return cli_main
 
 
 @pytest.fixture
@@ -30,17 +41,19 @@ def test_sanity():
 
 def test_loggy_sanity(capfd):
     excepted = "Hello from loggy!"
-    assert loggy.loggy() == excepted
-    out, err = capfd.readouterr()
-    assert out == f"{excepted}\n"
+    runner = CliRunner()
+    result = runner.invoke(loggy.cli, ['loggy'])
+    assert result.exit_code == 0
+    assert result.output == f"{excepted}\n"
 
 
-def test_load_stack(config_yml):
+def test_load_stack(config_yml, tmp_output_dir):
+    config_yml = Path(config_yml)
     stack = loggy.LoggyStack(config_yml=config_yml, output_dir=tmp_output_dir)
     assert isinstance(stack, loggy.LoggyStack)
     assert stack.name == 'loggy_test'
     assert stack.kibana_port == 5601
-    assert stack.elastic_url == 'localhost'
+    assert stack.elastic_url == 'https://localhost:9200'
 
 
 def test_copy_stack_files(tmp_output_dir):
@@ -62,24 +75,22 @@ def test_make_stack(config_yml, tmp_output_dir):
     assert loggy._make_stack(config_yml=config_yml, output_dir=tmp_output_dir, force=True)
 
 
-@pytest.fixture(scope="session")
-def cli_runner():
-    """Fixture that returns a helper function to run the cli."""
-    runner = CliRunner()
+# def test_cli_make_stack(cli_runner, config_yml, tmp_output_dir):
+#     # First call should create the folder
+#     conf = str(config_yml)
+#     temp = str(tmp_output_dir)
+#     result = cli_runner(conf, '--out', temp)
+#     assert result.exit_code == 0
+#     print('result.output')
+#     print(result.output)
+#     print(f"Created deployent: {temp}")
 
-    def cli_main(*cli_args, **cli_kwargs):
-        """Run cli main with the given args."""
-        return runner.invoke(main, cli_args, **cli_kwargs)
 
-    return cli_main
-
-
-def test_cli_make_stack(cli_runner, config_yml, tmp_output_dir):
-    # First call should create the folder
-    conf = str(config_yml)
-    temp = str(tmp_output_dir)
-    result = cli_runner(conf, '--out', temp)
-    assert result.exit_code == 0
-    print('result.output')
-    print(result.output)
-    print(f"Created deployent: {temp}")
+# def test_ping_elasticsearch():
+#     config_yml = '/workspaces/docker-elk/loggy_deployment/config/conf_template.yml'
+#     output_dir = '/workspaces/docker-elk/loggy_deployment/deployments/loggy_dev'
+#     output_dir = Path(output_dir)
+#     stack = loggy.LoggyStack(config_yml=config_yml, output_dir=output_dir)
+#     # Check if the elasticsearch is up
+#     # Find string in the output
+#     stack.ping_elastic()

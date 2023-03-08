@@ -1,18 +1,22 @@
 import requests
 import os
+from pathlib import Path
 import jinja2
 import json
 from typing import Union
 
 cert_path = './tls/certs/ca/ca.crt'
+cert_path = '/workspaces/docker-elk/loggy_deployment/deployments/loggy_dev/tls/certs/ca/ca.crt'
 agent_policy_name = 'ci agent policy 1'
 kibana_url = 'http://localhost:5601'
 agent_compose_template = './extensions/agent/agent-compose.yml'
 
 
-def ping_elasticsearch(url: str, ca: str) -> dict:
+def ping_elasticsearch(url: str, ca: Path) -> dict:
     """Queries the Elasticsearch API to check if it is up and running."""
-    response = requests.get(url, auth=('elastic', 'changeme'), verify=ca)
+    # Cast the Path object to a string
+    _ca = str(ca)
+    response = requests.get(url, auth=('elastic', 'changeme'), verify=_ca)
     resp_dict = json.loads(response.text)
     return resp_dict
 
@@ -27,7 +31,7 @@ def check_certificate(path: str) -> bool:
         return False
 
 
-def check_elasticsearch_status(url: str, ca: str):
+def check_elasticsearch_status(url: str, ca: Path):
     """Checks the Elasticsearch status"""
     response = ping_elasticsearch(url, ca)
     if isinstance(response, dict):

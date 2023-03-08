@@ -71,7 +71,7 @@ loggy:			## 🧾Show Loggy help
 
 .PHONY: loggy-make
 loggy-make:			## Create and start a Dev Loggy Stack
-	$(LOGGY) $(LOGGY_DEV_CONFIG) --force
+	$(LOGGY) make $(LOGGY_DEV_CONFIG) --force
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d portainer
 	# Generate TLS certs
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up tls
