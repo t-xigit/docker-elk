@@ -41,6 +41,21 @@
 					"GitHub.copilot"
 				]
 			}
+		},
+		"portsAttributes": {
+			"5601": {
+				"label": "Kibana"
+			},
+			"8220": {
+				"label": "Fleet Server"
+			},
+			"9200": {
+				"label": "Elasticsearch"
+			},
+			"9443": {
+				"label": "Portrainer",
+				"protocol": "https"
+			}
 		}
 
 	// Configure tool-specific properties.
