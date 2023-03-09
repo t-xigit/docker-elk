@@ -2,6 +2,7 @@ import pytest
 import os
 from pathlib import Path
 from click.testing import CliRunner
+from loggy import elk_api
 from loggy import main as loggy
 
 
@@ -56,23 +57,45 @@ def test_load_stack(config_yml, tmp_output_dir):
     assert stack.elastic_url == 'https://localhost:9200'
 
 
+def test_make_stack(config_yml, tmp_output_dir):
+    assert os.path.isfile(config_yml)
+    stack = loggy.LoggyStack(config_yml=config_yml, output_dir=tmp_output_dir)
+    assert stack.make_stack()
+    assert os.path.isdir(tmp_output_dir / 'loggy_test')
+    # Test that the folder already exists and the exception is raised
+    with pytest.raises(Exception):
+        stack.make_stack()
+    # Test that the folder already exists and the force flag is True
+    # assert stack.make_stack(force=True)
+
+
+# Certifacte functions
+def test_make_ca_cert(config_yml, tmp_output_dir):
+    stack = loggy.LoggyStack(config_yml=config_yml, output_dir=tmp_output_dir)
+    stack.make_stack()
+    # assert os.path.isfile(tmp_output_dir / 'tls' / 'certs' / 'ca' / 'ca.crt')
+
+
+# Fingerprint functions
+def test_get_fingerprint(config_yml, tmp_output_dir):
+    test_crt = resources_path / 'test_fingerprint' / 'ca.crt'
+    expected_fingerprint = '9689574282f8d1088947747cd4000c3e55bf091a54cd76c8892567b46bffeb34'
+    fp = elk_api.get_ca_fingerprint(test_crt)
+    assert fp == expected_fingerprint
+
+
+def test_update_fingerprint(config_yml, tmp_output_dir):
+    stack = loggy.LoggyStack(config_yml=config_yml, output_dir=tmp_output_dir)
+    stack.make_stack()
+    stack._update_fingerprint()
+
+
 def test_copy_stack_files(tmp_output_dir):
     assert loggy._copy_stack_files(output_dir=tmp_output_dir)
     print(os.listdir(tmp_output_dir))
     assert os.path.isfile(tmp_output_dir / 'agent' / 'Dockerfile')
     # assert os.path.isfile(tmp_output_dir / 'docker-compose.yml')
     # assert os.path.isfile(tmp_output_dir / '.env')
-
-
-def test_make_stack(config_yml, tmp_output_dir):
-    assert os.path.isfile(config_yml)
-    assert loggy._make_stack(config_yml=config_yml, output_dir=tmp_output_dir)
-    assert os.path.isdir(tmp_output_dir / 'loggy_test')
-    # Test that the folder already exists and the exception is raised
-    with pytest.raises(Exception):
-        loggy._make_stack(config_yml=config_yml, output_dir=tmp_output_dir)
-    # Test that the folder already exists and the force flag is True
-    assert loggy._make_stack(config_yml=config_yml, output_dir=tmp_output_dir, force=True)
 
 
 # def test_cli_make_stack(cli_runner, config_yml, tmp_output_dir):

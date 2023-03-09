@@ -1,9 +1,11 @@
 import requests
 import os
+import subprocess
 from pathlib import Path
 import jinja2
 import json
 from typing import Union
+from .utils import assert_is_file
 
 
 agent_policy_name = 'ci agent policy 1'
@@ -83,6 +85,21 @@ def render_agent_compose(template_file: str, context: dict) -> str:
     with open(deployment_file, mode='w', encoding="utf-8") as f:
         f.write(deployment)
     return deployment_file
+
+
+def get_ca_fingerprint(ca_path: Path) -> str:
+    """Updates the ca fingerprint in the agent compose file"""
+    assert_is_file(ca_path)
+    # Create CA Fingerprint
+    ca = subprocess.run(['openssl', 'x509', '-noout', '-fingerprint', '-sha256', '-in', ca_path],
+                        capture_output=True, encoding='utf-8')
+    # Get everything after the = sign
+    ca_fingerprint = str(ca.stdout.split('=')[1].strip())
+    # Remove the colons
+    ca_fingerprint = ca_fingerprint.replace(':', '')
+    # Convert to lowercase
+    ca_fingerprint = ca_fingerprint.lower()
+    return ca_fingerprint
 
 
 # create_agent_policy(agent_policy_name, 'first policy', kibana_url)
