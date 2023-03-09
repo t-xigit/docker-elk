@@ -5,8 +5,7 @@ import jinja2
 import json
 from typing import Union
 
-cert_path = './tls/certs/ca/ca.crt'
-cert_path = '/workspaces/docker-elk/loggy_deployment/deployments/loggy_dev/tls/certs/ca/ca.crt'
+
 agent_policy_name = 'ci agent policy 1'
 kibana_url = 'http://localhost:5601'
 agent_compose_template = './extensions/agent/agent-compose.yml'
@@ -19,26 +18,6 @@ def ping_elasticsearch(url: str, ca: Path) -> dict:
     response = requests.get(url, auth=('elastic', 'changeme'), verify=_ca)
     resp_dict = json.loads(response.text)
     return resp_dict
-
-
-def check_certificate(path: str) -> bool:
-    """Checks if the certificate is created """
-    if os.path.isfile(cert_path):
-        print("Certificate exists")
-        return True
-    else:
-        print("Certificate does not exist")
-        return False
-
-
-def check_elasticsearch_status(url: str, ca: Path):
-    """Checks the Elasticsearch status"""
-    response = ping_elasticsearch(url, ca)
-    if isinstance(response, dict):
-        if response['tagline'] == 'You Know, for Search':
-            print("Elasticsearch is up and running")
-        else:
-            print("Elasticsearch is not running")
 
 
 def get_agent_policy_id(name: str, url: str) -> str:
@@ -106,8 +85,6 @@ def render_agent_compose(template_file: str, context: dict) -> str:
     return deployment_file
 
 
-# check_elasticsearch_status('https://localhost:9200', cert_path)
-# check_certificate(cert_path)
 # create_agent_policy(agent_policy_name, 'first policy', kibana_url)
 # policy_id = get_agent_policy_id(agent_policy_name, kibana_url)
 # print(policy_id)

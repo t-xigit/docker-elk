@@ -57,9 +57,15 @@ class LoggyStack:
 
     def ping_elastic(self):
         """Pings Elasticsearch"""
-        assert self.elastic_url is not None, "Elasticsearch host must be defined"
-        replie = elk_api.ping_elasticsearch(self.elastic_url, self.elastic_ca)
-        assert replie['tagline'] == 'You Know, for Search', "Elasticsearch is not running"
+        reply = elk_api.ping_elasticsearch(self.elastic_url, self.elastic_ca)
+        assert reply['tagline'] == 'You Know, for Search', "Elasticsearch is not running"
+
+    def _create_agent_policy(self):
+        """Returns the agent policy"""
+        agent_name = 'CI/CD Agent Policy'
+        description = 'Agent Policy for the CI/CD Agent'
+        policy = elk_api.create_agent_policy(agent_name, description, self.elastic_url)
+        return policy
 
 
 @click.command()
