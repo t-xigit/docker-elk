@@ -65,6 +65,7 @@ def test_make_stack(config_yml, tmp_output_dir):
     # Test that the folder already exists and the exception is raised
     with pytest.raises(Exception):
         stack.make_stack()
+    print("Stack created: ", stack.output_dir)
     # Test that the folder already exists and the force flag is True
     # assert stack.make_stack(force=True)
 

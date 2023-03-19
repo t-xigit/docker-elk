@@ -33,6 +33,7 @@ class LoggyStack:
         self.kibana_url: str = 'http://localhost:5601'
         self.elastic_url: str
         self.elastic_ca: Path
+        self.ca_fingerprint: str
         self._load_stack()
 
     def _load_stack(self) -> bool:
@@ -69,8 +70,24 @@ class LoggyStack:
         return policy
 
     def _update_fingerprint(self):
-        fingerprint = elk_api.get_ca_fingerprint(self.elastic_ca)
-        print(f"Fingerprint: {fingerprint}")
+        ca_fingerprint = elk_api.get_ca_fingerprint(self.elastic_ca)
+        print(f"Fingerprint: {ca_fingerprint}")
+        self.ca_fingerprint = ca_fingerprint
+        # Update the fingerprint in the Kibana config file
+        kibana_env = Path(self.output_dir / self.name)
+        assert kibana_env.exists(), f"Kibana environment {kibana_env} does not exist"
+        kibana_config_file = Path(self.output_dir / self.name / 'kibana' / 'config' / 'kibana.yml')
+        environment = jinja2.Environment(loader=jinja2.FileSystemLoader(kibana_env))
+        template = environment.get_template('kibana/config/kibana.yml.j2')
+        kibana_config = template.render(CA_TRUSTED_FINGERPRINT=self.ca_fingerprint)
+
+        with open(kibana_config_file, mode='w', encoding="utf-8") as f:
+            f.write(kibana_config)
+        # Make sure the fingerprint is updated into the kibana.yml file
+        # Find string in file
+        with open(kibana_config_file, 'r') as f:
+            if self.ca_fingerprint not in f.read():
+                raise Exception("Fingerprint not updated in kibana.yml file")
 
     def _make_stack_files(self, deploy_folder: Path) -> bool:
         """Render deployment files for Loggy Stack"""
@@ -78,7 +95,7 @@ class LoggyStack:
         kibana_env = Path(TEMPLATE_DIR)
         assert kibana_env.exists(), f"Kibana environment {kibana_env} does not exist"
 
-        # Jina2 rendering needs to be done in a separate function
+        # Jinja2 rendering needs to be done in a separate function
         environment = jinja2.Environment(loader=jinja2.FileSystemLoader(kibana_env))
         template = environment.get_template('kibana/config/kibana.yml.j2')
         kibana_config = template.render(KibanaServerName=self.kibana_server_name)
@@ -129,6 +146,7 @@ class LoggyStack:
         _copy_stack_files(deploy_folder)
         self._make_stack_files(deploy_folder)
         self._make_certificates()
+        self._update_fingerprint()
         return True
 
 
