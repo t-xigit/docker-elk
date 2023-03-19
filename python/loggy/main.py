@@ -16,7 +16,7 @@ from .utils import make_sure_path_exists,\
 # Absolute path to the main repo folder
 abs_path = Path(__file__).resolve().parents[2]
 # abs_path = Path(__file__).parent.absolute()
-default_deployment_folder = Path(abs_path / 'loggy_deployment/deployments')
+DEFAULT_DEPLOYMENT_FOLDER = Path(abs_path / 'loggy_deployment/deployments')
 TEMPLATE_DIR = Path(abs_path / 'loggy_deployment/config/templates/')
 
 
@@ -78,7 +78,8 @@ class LoggyStack:
         assert kibana_env.exists(), f"Kibana environment {kibana_env} does not exist"
         kibana_config_file = Path(self.output_dir / self.name / 'kibana' / 'config' / 'kibana.yml')
         environment = jinja2.Environment(loader=jinja2.FileSystemLoader(kibana_env))
-        template = environment.get_template('kibana/config/kibana.yml.j2')
+        # For this one we use the rendered file
+        template = environment.get_template('kibana/config/kibana.yml')
         kibana_config = template.render(CA_TRUSTED_FINGERPRINT=self.ca_fingerprint)
 
         with open(kibana_config_file, mode='w', encoding="utf-8") as f:
@@ -87,6 +88,7 @@ class LoggyStack:
         # Find string in file
         with open(kibana_config_file, 'r') as f:
             if self.ca_fingerprint not in f.read():
+                print(f"Fingerprint not updated in {kibana_config_file}")
                 raise Exception("Fingerprint not updated in kibana.yml file")
 
     def _make_stack_files(self, deploy_folder: Path) -> bool:
@@ -98,7 +100,8 @@ class LoggyStack:
         # Jinja2 rendering needs to be done in a separate function
         environment = jinja2.Environment(loader=jinja2.FileSystemLoader(kibana_env))
         template = environment.get_template('kibana/config/kibana.yml.j2')
-        kibana_config = template.render(KibanaServerName=self.kibana_server_name)
+        kibana_config = template.render(KibanaServerName=self.kibana_server_name,
+                                        CA_TRUSTED_FINGERPRINT='{{CA_TRUSTED_FINGERPRINT}}')
 
         kibana_config_file = Path(deploy_folder / 'kibana' / 'config' / 'kibana.yml')
         # Render the .env file
@@ -220,15 +223,15 @@ def make(conf, out, force):
     """Create a new deployment from a YAML file"""
     click.echo(f"Creating deployment for: {conf}!")
     assert_is_file(conf)
-    stack = LoggyStack(config_yml=conf)
     if out is not None:
-        click.echo(f"Output folder: {default_deployment_folder}!")
         _out = Path(out)
-        stack.make_stack(config_yml=conf, output_dir=_out, force=force)
-        return None
+        click.echo(f"Output folder: {_out}!")
     else:
-        stack.make_stack(force=force)
-        return None
+        _out = Path(DEFAULT_DEPLOYMENT_FOLDER)
+        click.echo(f"Output folder: {_out}!")
+    stack = LoggyStack(config_yml=conf, output_dir=_out)
+    stack.make_stack(force=force)
+    return None
 
 
 @click.group()

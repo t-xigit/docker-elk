@@ -6,7 +6,7 @@ PYTHON := $(VENV)/bin/python
 FLAKE8 := $(VENV)/bin/flake8
 PYTEST := $(VENV)/bin/pytest
 LOGGY := $(PYTHON) -m python.loggy		# Loggy CLI module
-LOGGY_DEV_DIR := ./loggy_deployment/deployments/loggy_dev/	# Dir where the dev files are stored
+LOGGY_DEV_DIR := ./loggy_deployment/deployments/	# Dir where the dev files are stored
 LOGGY_DEV_COMPOSE := -f ./loggy_deployment/deployments/loggy_dev/docker-compose.yml
 LOGGY_DEV_CONFIG := ./loggy_deployment/config/conf_template.yml
 
@@ -71,11 +71,8 @@ loggy:			## 🧾Show Loggy help
 
 .PHONY: loggy-make
 loggy-make:			## Create and start a Dev Loggy Stack
-	$(LOGGY) make $(LOGGY_DEV_CONFIG) --force
+	$(LOGGY) make $(LOGGY_DEV_CONFIG) --out $(LOGGY_DEV_DIR) --force
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d portainer
-	# Generate TLS certs
-	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up tls
-	./loggy_deployment/deployments/loggy_dev/setup/update_fingerprint.sh
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d
 
 .PHONY: loggy-stop
@@ -97,7 +94,7 @@ loggy-ps:				## Show all running containers.
 
 .PHONY: loggy-down
 loggy-down:			## TODO Down ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} down
+	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} down -v
 
 loggy-restart:		## Restart ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} restart ${LOGGY_SERVICES}
