@@ -69,11 +69,12 @@ def test_make_stack(config_yml, tmp_output_dir):
     # assert stack.make_stack(force=True)
 
 
-# Certifacte functions
+# Certificate functions
 def test_make_ca_cert(config_yml, tmp_output_dir):
     stack = loggy.LoggyStack(config_yml=config_yml, output_dir=tmp_output_dir)
     stack.make_stack()
-    # assert os.path.isfile(tmp_output_dir / 'tls' / 'certs' / 'ca' / 'ca.crt')
+    cert_dir = tmp_output_dir / stack.name / 'tls' / 'certs' / 'ca'
+    assert os.path.isfile(cert_dir / 'ca.crt')
 
 
 # Fingerprint functions
