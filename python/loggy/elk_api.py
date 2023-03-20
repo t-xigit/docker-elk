@@ -13,7 +13,6 @@ kibana_url = 'http://localhost:5601'
 agent_compose_template = Path('./loggy_deployment/config/templates/agent/agent-compose.yml')
 
 
-
 def ping_elasticsearch(url: str, ca: Path) -> dict:
     """Queries the Elasticsearch API to check if it is up and running."""
     # Cast the Path object to a string
@@ -73,7 +72,7 @@ def get_enrollment_token(url: str, policy_id: str) -> Union[str, None]:
         return None
 
 
-def render_agent_compose(template_file: Path, deployment_file: Path, context: dict) -> str:
+def render_agent_compose(template_file: Path, deployment_file: Path, context: dict) -> bool:
     """Loads a Jinja template and returns the rendered template."""
     if not os.path.isfile(template_file):
         raise FileNotFoundError(f"File {template_file} does not exist")
@@ -83,7 +82,7 @@ def render_agent_compose(template_file: Path, deployment_file: Path, context: di
     deployment = template.render(context)
     with open(deployment_file, mode='w', encoding="utf-8") as f:
         f.write(deployment)
-    return deployment_file
+    return True
 
 
 def get_ca_fingerprint(ca_path: Path) -> str:
