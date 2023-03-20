@@ -10,7 +10,8 @@ from .utils import assert_is_file
 
 agent_policy_name = 'ci agent policy 1'
 kibana_url = 'http://localhost:5601'
-agent_compose_template = './extensions/agent/agent-compose.yml'
+agent_compose_template = Path('./loggy_deployment/config/templates/agent/agent-compose.yml')
+
 
 
 def ping_elasticsearch(url: str, ca: Path) -> dict:
@@ -72,16 +73,14 @@ def get_enrollment_token(url: str, policy_id: str) -> Union[str, None]:
         return None
 
 
-def render_agent_compose(template_file: str, context: dict) -> str:
+def render_agent_compose(template_file: Path, deployment_file: Path, context: dict) -> str:
     """Loads a Jinja template and returns the rendered template."""
     if not os.path.isfile(template_file):
         raise FileNotFoundError(f"File {template_file} does not exist")
-    path = os.path.dirname(template_file)
+    path = Path(template_file).resolve().parent
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(path))
     template = environment.get_template(os.path.basename(template_file))
-
-    deployment = template.render(FleetEnrollmentToken=context['enrollment_token'])
-    deployment_file = os.path.join(path, 'agent-compose-deploy.yml')
+    deployment = template.render(context)
     with open(deployment_file, mode='w', encoding="utf-8") as f:
         f.write(deployment)
     return deployment_file
@@ -102,10 +101,12 @@ def get_ca_fingerprint(ca_path: Path) -> str:
     return ca_fingerprint
 
 
-# create_agent_policy(agent_policy_name, 'first policy', kibana_url)
-# policy_id = get_agent_policy_id(agent_policy_name, kibana_url)
-# print(policy_id)
-# enrollment_token = get_enrollment_token(kibana_url, policy_id)
-# print(enrollment_token)
-#
-# render_agent_compose(agent_compose_template, {'enrollment_token': enrollment_token})
+def add_agent(deployment_file: Path):
+    create_agent_policy(agent_policy_name, 'first policy', kibana_url)
+    policy_id = get_agent_policy_id(agent_policy_name, kibana_url)
+    print(policy_id)
+    enrollment_token = get_enrollment_token(kibana_url, policy_id)
+    print(enrollment_token)
+    context = {'FleetEnrollmentToken': enrollment_token,
+               'ELKNetworkforAgent': 'loggy_dev_elk'}
+    render_agent_compose(agent_compose_template, deployment_file, context)

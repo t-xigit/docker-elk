@@ -57,17 +57,26 @@ class LoggyStack:
         self.elastic_ca = self.output_dir / self.name / 'tls' / 'certs' / 'ca' / 'ca.crt'
         return True
 
+    # ELK Stack test functions
     def ping_elastic(self):
         """Pings Elasticsearch"""
         reply = elk_api.ping_elasticsearch(self.elastic_url, self.elastic_ca)
         assert reply['tagline'] == 'You Know, for Search', "Elasticsearch is not running"
 
+    # Agent management functions
     def _create_agent_policy(self):
         """Returns the agent policy"""
         agent_name = 'CI/CD Agent Policy'
         description = 'Agent Policy for the CI/CD Agent'
         policy = elk_api.create_agent_policy(agent_name, description, self.elastic_url)
         return policy
+
+    def add_agent(self) -> bool:
+        """Adds an agent to the stack"""
+        # Create the agent compose file
+        agent_comp_file = Path(self.output_dir / self.name / 'agent' / 'agent-compose.yml')
+        elk_api.add_agent(agent_comp_file)
+        return True
 
     def _update_fingerprint(self):
         ca_fingerprint = elk_api.get_ca_fingerprint(self.elastic_ca)
@@ -159,6 +168,17 @@ def loggy():
     click.echo(mystring)
 
 
+@click.command()
+@click.argument('conf')
+def add_agent(conf):
+    """Add an agent to the stack"""
+    click.echo(f"Loading Stack: {conf}!")
+    assert_is_file(conf)
+    stack = LoggyStack(config_yml=conf, output_dir=DEFAULT_DEPLOYMENT_FOLDER)
+    stack.add_agent()
+    return True
+
+
 def copy_file(source: Path, destination: Path) -> bool:
     """Copy a file from source to destination"""
     assert os.path.isfile(source), f"Source file {source} does not exist"
@@ -241,6 +261,7 @@ def cli():
 
 cli.add_command(make)
 cli.add_command(loggy)
+cli.add_command(add_agent)
 
 if __name__ == '__main__':
     cli()

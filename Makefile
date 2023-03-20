@@ -8,6 +8,8 @@ PYTEST := $(VENV)/bin/pytest
 LOGGY := $(PYTHON) -m python.loggy		# Loggy CLI module
 LOGGY_DEV_DIR := ./loggy_deployment/deployments/	# Dir where the dev files are stored
 LOGGY_DEV_COMPOSE := -f ./loggy_deployment/deployments/loggy_dev/docker-compose.yml
+LOGGY_DEV_ENV_FILE := ./loggy_deployment/deployments/loggy_dev/.env
+LOGGY_DEV_AGENT_COMPOSE := -f ./loggy_deployment/deployments/loggy_dev/agent/agent-compose.yml
 LOGGY_DEV_CONFIG := ./loggy_deployment/config/conf_template.yml
 
 # Environment variables
@@ -74,6 +76,11 @@ loggy-make:			## Create and start a Dev Loggy Stack
 	$(LOGGY) make $(LOGGY_DEV_CONFIG) --out $(LOGGY_DEV_DIR) --force
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d portainer
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d
+
+.PHONY: loggy-add_agent
+loggy-add_agent:			## Add an agent to the Loggy Stack for testing
+	$(LOGGY) add-agent $(LOGGY_DEV_CONFIG)
+	$(DOCKER_COMPOSE_COMMAND) --env-file $(LOGGY_DEV_ENV_FILE) $(LOGGY_DEV_AGENT_COMPOSE) up -d
 
 .PHONY: loggy-stop
 loggy-stop:			## Stop only the Loggy Stack

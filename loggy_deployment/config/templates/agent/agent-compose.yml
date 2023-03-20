@@ -10,9 +10,9 @@ services:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
       # (!) TLS certificates. Generate using the 'tls' service.
-      - ../../tls/certs/ca/ca.crt:/usr/share/elastic-agent/ca.crt:ro,z
-      - ../../tls/certs/elastic-agent/elastic-agent.crt:/usr/share/elastic-agent/elastic-agent.crt:ro,Z
-      - ../../tls/certs/elastic-agent/elastic-agent.key:/usr/share/elastic-agent/elastic-agent.key:ro,Z
+      - ../tls/certs/ca/ca.crt:/usr/share/elastic-agent/ca.crt:ro,z
+      - ../tls/certs/elastic-agent/elastic-agent.crt:/usr/share/elastic-agent/elastic-agent.crt:ro,Z
+      - ../tls/certs/elastic-agent/elastic-agent.key:/usr/share/elastic-agent/elastic-agent.key:ro,Z
     environment:
       - ELASTICSEARCH_CA=/usr/share/elastic-agent/ca.crt
       - FLEET_ENROLLMENT_TOKEN={{ FleetEnrollmentToken }}
@@ -20,9 +20,9 @@ services:
       - FLEET_URL=https://fleet-server:8220
     # Elastic Agent does not retry failed connections to Kibana upon the initial enrollment phase.
     networks:
-      - docker-elk_elk
+      - {{ ELKNetworkforAgent }}
     restart: always
 
 networks:
-  docker-elk_elk:
+  {{ ELKNetworkforAgent }}:
     external: true
