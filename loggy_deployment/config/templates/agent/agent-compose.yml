@@ -5,7 +5,7 @@ services:
     user: root
     container_name: elastic-agent
     build:
-      context: agent/
+      context: ../agent/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
