@@ -45,6 +45,14 @@ pyinit:		## ✅Initialize Python Virtual Environment
 		$(PYTHON) -m pip install --upgrade pip
 		$(PYTHON) -m pip install -r ./python/requirements.txt
 
+.PHONY: pyclean
+pyclean:		## ✅Clean Python VENV and Build Files
+		@echo "Removing Python Virtual Environment"
+		@rm -rf $(VENV)
+		@echo "Removing Python Build Files"
+		@find . -name '*.pyc' -delete
+		@find . -name '__pycache__' -delete
+
 .PHONY: pylint
 pylint:		## ✅Run pylint
 		$(FLAKE8) ./python --config ./python/.flake8
@@ -116,10 +124,8 @@ loggy-images:			## Show all Images of ELK and all its extra components.
 
 .PHONY: loggy-prune
 loggy-prune:			## Remove everything from the Loggy Stack
+	@make pyclean
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) --profile setup --profile development down -v
-	@rm -rf $(VENV)
-	@find . -name '*.pyc' -delete
-	@find . -name '__pycache__' -delete
 
 .PHONY: loggy-test
 loggy-test:			## Run all tests.
