@@ -151,6 +151,7 @@ loggy-images:			## Show all Images of ELK and all its extra components.
 .PHONY: loggy-prune
 loggy-prune:			## Remove everything from the Loggy Stack
 	@make pyclean
+	docker container stop elastic-agent
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) --profile setup --profile development down -v
 
 .PHONY: loggy-test
