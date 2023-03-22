@@ -17,6 +17,7 @@ jobs:
       - run: make loggy
       - run: make loggy-make
       - run: make loggy-test TEST_ENV="docker_desktop"
+      - run: make loggy-add_agent
       - run: make loggy-restart
       - run: make loggy-images
       - run: make loggy-ps
