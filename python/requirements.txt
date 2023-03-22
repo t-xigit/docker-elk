@@ -17,3 +17,4 @@ mypy
 types-requests
 types-PyYAML
 types-Jinja2
+types-click

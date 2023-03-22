@@ -6,8 +6,10 @@ PYTHON := $(VENV)/bin/python
 FLAKE8 := $(VENV)/bin/flake8
 PYTEST := $(VENV)/bin/pytest
 LOGGY := $(PYTHON) -m python.loggy		# Loggy CLI module
-LOGGY_DEV_DIR := ./loggy_deployment/deployments/loggy_dev/	# Dir where the dev files are stored
+LOGGY_DEV_DIR := ./loggy_deployment/deployments/	# Dir where the dev files are stored
 LOGGY_DEV_COMPOSE := -f ./loggy_deployment/deployments/loggy_dev/docker-compose.yml
+LOGGY_DEV_ENV_FILE := ./loggy_deployment/deployments/loggy_dev/.env
+LOGGY_DEV_AGENT_COMPOSE := -f ./loggy_deployment/deployments/loggy_dev/agent/agent-compose.yml
 LOGGY_DEV_CONFIG := ./loggy_deployment/config/conf_template.yml
 
 # Environment variables
@@ -43,6 +45,14 @@ pyinit:		## ✅Initialize Python Virtual Environment
 		$(PYTHON) -m pip install --upgrade pip
 		$(PYTHON) -m pip install -r ./python/requirements.txt
 
+.PHONY: pyclean
+pyclean:		## ✅Clean Python VENV and Build Files
+		@echo "Removing Python Virtual Environment"
+		@rm -rf $(VENV)
+		@echo "Removing Python Build Files"
+		@find . -name '*.pyc' -delete
+		@find . -name '__pycache__' -delete
+
 .PHONY: pylint
 pylint:		## ✅Run pylint
 		$(FLAKE8) ./python --config ./python/.flake8
@@ -71,23 +81,51 @@ loggy:			## 🧾Show Loggy help
 
 .PHONY: loggy-make
 loggy-make:			## Create and start a Dev Loggy Stack
-	$(LOGGY) $(LOGGY_DEV_CONFIG) --force
+	$(LOGGY) make $(LOGGY_DEV_CONFIG) --out $(LOGGY_DEV_DIR) --force
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d portainer
-	# Generate TLS certs
-	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up tls
-	./loggy_deployment/deployments/loggy_dev/setup/update_fingerprint.sh
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d
+
+.PHONY: loggy-agent-add
+loggy-agent-add:			## Add an agent to the Loggy Stack for testing
+	$(LOGGY) add-agent $(LOGGY_DEV_CONFIG)
+	$(DOCKER_COMPOSE_COMMAND) --env-file $(LOGGY_DEV_ENV_FILE) $(LOGGY_DEV_AGENT_COMPOSE) up -d
+
+.PHONY: loggy-agent-stop
+loggy-agent-stop:			## Stop the agent container
+	@echo "Stopping the agent container"
+ifneq ("$(wildcard $(LOGGY_DEV_AGENT_COMPOSE))","")
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_AGENT_COMPOSE) stop
+else
+	@echo "No Agent to stop"
+endif
+
+.PHONY: loggy-agent-rm
+loggy-agent-rm:			## Remove the agent container
+	@echo "Removing the agent container"
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_AGENT_COMPOSE) rm -f
+
+.PHONY: loggy-agent-start
+loggy-agent-start:			## Start the agent
+	@echo "Starting the agent"
+	$(DOCKER_COMPOSE_COMMAND) --env-file $(LOGGY_DEV_ENV_FILE) $(LOGGY_DEV_AGENT_COMPOSE) start elastic-agent
 
 .PHONY: loggy-stop
 loggy-stop:			## Stop only the Loggy Stack
+	@echo "Stopping the Loggy Stack"
+ifneq ("$(wildcard $(LOGGY_DEV_COMPOSE))","")
 	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} stop ${LOGGY_SERVICES}
+else
+	@echo "No Loggy Stack to stop"
+endif
 
 .PHONY: loggy-start
 loggy-start:			## TODO Down ELK and all its extra components.
+	@echo "Starting the Loggy Stack"
 	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} start ${LOGGY_SERVICES}
 
 .PHONY: loggy-rm
 loggy-rm:				## Remove ELK and all its extra components containers.
+	@echo "Removing the Loggy Stack"
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE)  --profile setup rm -f ${LOGGY_SERVICES}
 
 # Docker shortcuts when ELK is running
@@ -97,7 +135,7 @@ loggy-ps:				## Show all running containers.
 
 .PHONY: loggy-down
 loggy-down:			## TODO Down ELK and all its extra components.
-	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} down
+	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} down -v
 
 loggy-restart:		## Restart ELK and all its extra components.
 	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} restart ${LOGGY_SERVICES}
@@ -112,12 +150,22 @@ loggy-images:			## Show all Images of ELK and all its extra components.
 
 .PHONY: loggy-prune
 loggy-prune:			## Remove everything from the Loggy Stack
+	@make pyclean
+	docker container stop elastic-agent
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) --profile setup --profile development down -v
-	@rm -rf $(VENV)
-	@find . -name '*.pyc' -delete
-	@find . -name '__pycache__' -delete
 
 .PHONY: loggy-test
 loggy-test:			## Run all tests.
 	echo "Running tests under env: ${TEST_ENV}" 
 	.github/workflows/scripts/run-tests-loggy-dev.sh ${TEST_ENV}
+
+.PHONY: loggy-rebuild
+loggy-rebuild:			## NOT WORKING YET Remove & Rebuild the Loggy Stack from scratch
+	@make loggy-stop
+	@make loggy-agent-stop
+	@make loggy-rm
+	@make loggy-agent-rm
+	sudo rm -rf $(LOGGY_DEV_DIR)
+	@make loggy-make
+	@make loggy-test
+	@make loggy-agent-add

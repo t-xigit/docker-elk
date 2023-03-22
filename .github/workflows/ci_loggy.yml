@@ -75,6 +75,9 @@ jobs:
       - name: run tests
         run: make loggy-test TEST_ENV="docker_native"
 
+      - name: Add CI Agent
+        run: make loggy-agent-add
+
         # Tear down. #
       - name: stop the loggy stack
         run: make loggy-stop

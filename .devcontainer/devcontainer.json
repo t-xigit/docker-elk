@@ -39,7 +39,8 @@
 					"ms-vscode.remote-server",
 					"cschleiden.vscode-github-actions",
 					"circleci.circleci",
-					"GitHub.copilot"
+					"GitHub.copilot",
+					"ms-python.flake8"
 				]
 			}
 		},
