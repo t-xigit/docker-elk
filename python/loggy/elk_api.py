@@ -32,7 +32,8 @@ def get_agent_policy_id(name: str, url: str) -> str:
         if policy['name'] == name:
             print(f'Policy Name: { policy["name"] }')
             print(f'Policy ID: { policy["id"] }')
-        return policy['id']
+            id = policy['id']
+    return id
 
 
 def create_agent_policy(name: str, description: str, url: str):
@@ -69,12 +70,12 @@ def get_enrollment_token(url: str, policy_id: str) -> Union[str, None]:
         for r in response.json()['items']:
             # Find the enrollment token for the agent policy
             if r['policy_id'] == policy_id:
-                print( f'Enrollment Token: {r["api_key"]}')
+                print(f'Enrollment Token: {r["api_key"]}')
                 print(f'Enrollment Policy ID: {r["policy_id"]}')
             return r['api_key']
     else:
         print("No enrollment token found")
-        return None
+    return None
 
 
 def render_agent_compose(template_file: Path, deployment_file: Path, context: dict) -> bool:
