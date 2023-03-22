@@ -85,21 +85,47 @@ loggy-make:			## Create and start a Dev Loggy Stack
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d portainer
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE) up -d
 
-.PHONY: loggy-add_agent
-loggy-add_agent:			## Add an agent to the Loggy Stack for testing
+.PHONY: loggy-agent-add
+loggy-agent-add:			## Add an agent to the Loggy Stack for testing
 	$(LOGGY) add-agent $(LOGGY_DEV_CONFIG)
 	$(DOCKER_COMPOSE_COMMAND) --env-file $(LOGGY_DEV_ENV_FILE) $(LOGGY_DEV_AGENT_COMPOSE) up -d
 
+.PHONY: loggy-agent-stop
+loggy-agent-stop:			## Stop the agent container
+	@echo "Stopping the agent container"
+ifneq ("$(wildcard $(LOGGY_DEV_AGENT_COMPOSE))","")
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_AGENT_COMPOSE) stop
+else
+	@echo "No Agent to stop"
+endif
+
+.PHONY: loggy-agent-rm
+loggy-agent-rm:			## Remove the agent container
+	@echo "Removing the agent container"
+	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_AGENT_COMPOSE) rm -f
+
+.PHONY: loggy-agent-start
+loggy-agent-start:			## Start the agent
+	@echo "Starting the agent"
+	$(DOCKER_COMPOSE_COMMAND) --env-file $(LOGGY_DEV_ENV_FILE) $(LOGGY_DEV_AGENT_COMPOSE) start elastic-agent
+
 .PHONY: loggy-stop
 loggy-stop:			## Stop only the Loggy Stack
+	@echo "Stopping the Loggy Stack"
+ifneq ("$(wildcard $(LOGGY_DEV_COMPOSE))","")
 	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} stop ${LOGGY_SERVICES}
+else
+	@echo "No Loggy Stack to stop"
+endif
 
 .PHONY: loggy-start
 loggy-start:			## TODO Down ELK and all its extra components.
+	@echo "Starting the Loggy Stack"
 	$(DOCKER_COMPOSE_COMMAND) ${LOGGY_DEV_COMPOSE} start ${LOGGY_SERVICES}
 
 .PHONY: loggy-rm
 loggy-rm:				## Remove ELK and all its extra components containers.
+	@echo "Removing the Loggy Stack"
 	$(DOCKER_COMPOSE_COMMAND) $(LOGGY_DEV_COMPOSE)  --profile setup rm -f ${LOGGY_SERVICES}
 
 # Docker shortcuts when ELK is running
@@ -131,3 +157,14 @@ loggy-prune:			## Remove everything from the Loggy Stack
 loggy-test:			## Run all tests.
 	echo "Running tests under env: ${TEST_ENV}" 
 	.github/workflows/scripts/run-tests-loggy-dev.sh ${TEST_ENV}
+
+.PHONY: loggy-rebuild
+loggy-rebuild:			## NOT WORKING YET Remove & Rebuild the Loggy Stack from scratch
+	@make loggy-stop
+	@make loggy-agent-stop
+	@make loggy-rm
+	@make loggy-agent-rm
+	sudo rm -rf $(LOGGY_DEV_DIR)
+	@make loggy-make
+	@make loggy-test
+	@make loggy-agent-add

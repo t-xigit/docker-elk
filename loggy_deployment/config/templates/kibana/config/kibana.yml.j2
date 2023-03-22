@@ -53,8 +53,6 @@ xpack.fleet.packages:
     version: latest
   - name: elastic_agent
     version: latest
-  - name: apm
-    version: latest
 
 xpack.fleet.agentPolicies:
   - name: Fleet Server Policy
@@ -73,34 +71,4 @@ xpack.fleet.agentPolicies:
       - name: elastic_agent-1
         package:
           name: elastic_agent
-  - name: Agent Policy APM Server
-    id: agent-policy-apm-server
-    description: Static agent policy for the APM Server integration
-    monitoring_enabled:
-      - logs
-      - metrics
-    package_policies:
-      - name: system-1
-        package:
-          name: system
-      - name: elastic_agent-1
-        package:
-          name: elastic_agent
-      - name: apm-1
-        package:
-          name: apm
-        # See the APM package manifest for a list of possible inputs.
-        # https://github.com/elastic/apm-server/blob/v8.5.0/apmpackage/apm/manifest.yml#L41-L168
-        inputs:
-          - type: apm
-            vars:
-              - name: host
-                value: 0.0.0.0:8200
-              - name: url
-                value: https://apm-server:8200
-              - name: tls_enabled
-                value: true
-              - name: tls_certificate
-                value: /usr/share/elastic-agent/apm-server.crt
-              - name: tls_key
-                value: /usr/share/elastic-agent/apm-server.key
+

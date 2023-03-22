@@ -8,7 +8,7 @@ from typing import Union
 from .utils import assert_is_file
 
 
-agent_policy_name = 'ci agent policy 1'
+agent_policy_name = 'ci agent policy'
 kibana_url = 'http://localhost:5601'
 agent_compose_template = Path('./loggy_deployment/config/templates/agent/agent-compose.yml')
 
@@ -26,14 +26,18 @@ def get_agent_policy_id(name: str, url: str) -> str:
     """Gets the agent policy id"""
     response = requests.get(url + '/api/fleet/agent_policies',
                             auth=('elastic', 'changeme'))
+    print('Response from get_agent_policy_id')
+    print(json.dumps(response.json(), indent=4))
     for policy in response.json()['items']:
         if policy['name'] == name:
-            print(policy['id'])
-    return policy['id']
+            print(f'Policy Name: { policy["name"] }')
+            print(f'Policy ID: { policy["id"] }')
+        return policy['id']
 
 
 def create_agent_policy(name: str, description: str, url: str):
     """Creates an agent policy in Elasticsearch"""
+    # https://www.elastic.co/guide/en/fleet/current/fleet-api-docs.html#create-agent-policy-api
     payload = {
         "name": name,
         "description": description,
@@ -45,7 +49,7 @@ def create_agent_policy(name: str, description: str, url: str):
     }
     Headers = {"kbn-xsrf": "true", "Content-Type": "application/json"}
     print("starting to create agent policy")
-    response = requests.post(url + '/api/fleet/agent_policies',
+    response = requests.post(url + '/api/fleet/agent_policies?sys_monitoring=true',
                              auth=('elastic', 'changeme'), json=payload,
                              headers=Headers)
     if response.status_code == 409:
@@ -59,14 +63,15 @@ def get_enrollment_token(url: str, policy_id: str) -> Union[str, None]:
     api = url + '/api/fleet/enrollment_api_keys'
     response = requests.get(api, headers=Headers,
                             auth=('elastic', 'changeme'))
-    print(response.json())
-    print(response.status_code)
+    print(json.dumps(response.json(), indent=4))
+    print(f'Policy ID to query: {policy_id}')
     if response.status_code == 200:
-        for r in response.json()['list']:
+        for r in response.json()['items']:
             # Find the enrollment token for the agent policy
             if r['policy_id'] == policy_id:
-                print(r['api_key'])
-        return r['api_key']
+                print( f'Enrollment Token: {r["api_key"]}')
+                print(f'Enrollment Policy ID: {r["policy_id"]}')
+            return r['api_key']
     else:
         print("No enrollment token found")
         return None
@@ -101,11 +106,9 @@ def get_ca_fingerprint(ca_path: Path) -> str:
 
 
 def add_agent(deployment_file: Path):
-    create_agent_policy(agent_policy_name, 'first policy', kibana_url)
+    create_agent_policy(agent_policy_name, 'Agent used for CI/CD', kibana_url)
     policy_id = get_agent_policy_id(agent_policy_name, kibana_url)
-    print(policy_id)
     enrollment_token = get_enrollment_token(kibana_url, policy_id)
-    print(enrollment_token)
     context = {'FleetEnrollmentToken': enrollment_token,
                'ELKNetworkforAgent': 'loggy_dev_elk'}
     render_agent_compose(agent_compose_template, deployment_file, context)
