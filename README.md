@@ -18,10 +18,14 @@ Run `make help` to get a list of all available targets.
 The first thing to run is `make pyinit` to install the python dependencies.
 If it fails you have to install python3 and pip3 first.
 
-To create a Loggy Stack run:  
-`make loggy-make`
-To force a rebuild of the stack run:
-`sudo make loggy-make`
+To create a Loggy Stack locally run:  
+`make loggy-make`  
+To force a rebuild of the stack run:  
+`sudo make loggy-make`  
+Creating a EC2 instance with the Loggy stack can be done with:  
+`export ANSIBLE_HOST_KEY_CHECKING=False`  
+`make ansible-aws-make-ec2`  
+`make ansible-aws-deploy`
 
 ## Enroll an Elastic Agent
 

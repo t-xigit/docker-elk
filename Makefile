@@ -17,7 +17,7 @@ LOGGY_DEV_CONFIG := ./loggy_deployment/config/conf_template.yml
 # This ist default value when running in docker desktop
 TEST_ENV?="docker_desktop"
 # Use this value when running on a linux host or an Github Action Runner
-# make test TEST_ENV="docker_native"
+# make loggy-test TEST_ENV="docker_native"
 
 # Docker Services
 LOGGY_SERVICES   := elasticsearch kibana fleet-server
@@ -81,7 +81,27 @@ python_ci:		## ✅Run all of the above
 ansible-lint:		## ✅Run ansible-lint
 		@echo "Running ansible-lint"
 		$(ANSIBLE-LINT) ./ansible/ansible-ec2/playbook.yml
-		$(ANSIBLE-LINT) ./ansible/ansible-pi/playbook.yml
+		#$(ANSIBLE-LINT) ./ansible/ansible-pi/playbook.yml
+
+.PHONY: ansible-aws-test
+ansible-aws-test:		## ✅Test the AWS credentials
+		@echo "Running ansible-test on AWS"
+		@ansible-playbook -i ~/repo/ansible/hosts.yml --tags "test-aws-cli" --vault-password-file pw.txt --extra-vars ansible/ansible-ec2/aws_ec2.yaml ansible/ansible-ec2/playbook.yml
+
+.PHONY: ansible-aws-make-ec2
+ansible-aws-make-ec2:		## ✅Create an EC2 instance
+		@echo "Creating and configuring EC2 instance"
+		@ansible-playbook -i ~/repo/ansible/hosts.yml --tags "ec2-setup" --vault-password-file pw.txt --extra-vars ansible/ansible-ec2/aws_ec2.yaml ansible/ansible-ec2/playbook.yml
+
+.PHONY: ansible-aws-deploy
+ansible-aws-deploy:		## ✅Deploy the Loggy Stack to AWS
+		@echo "Deploying Loggy Stack to AWS"
+		@ansible-playbook -i ~/repo/ansible/hosts.yml --tags "elk-setup" --vault-password-file pw.txt --extra-vars ansible/ansible-ec2/aws_ec2.yaml ansible/ansible-ec2/playbook.yml
+
+.PHONY: ansible-aws-elk-test
+ansible-aws-elk-test:		## ✅Test the ELK Stack on AWS
+		@echo "Running ansible-test on AWS"
+		@ansible-playbook -i ~/repo/ansible/hosts.yml --tags "elk-test" --vault-password-file pw.txt --extra-vars ansible/ansible-ec2/aws_ec2.yaml ansible/ansible-ec2/playbook.yml
 
 ##@ Loggy
 
