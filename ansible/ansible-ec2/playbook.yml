@@ -1,0 +1,203 @@
+---
+# Ansible Playbook to create a EC2 instance and bring up ELK Stack in docker
+# When running the first time export this variable:
+# export ANSIBLE_HOST_KEY_CHECKING=False
+# ansible-galaxy collection install community.docker
+- name: Get current inventory
+  hosts: localhost
+  connection: local
+  remote_user: ubuntu
+  gather_facts: false
+  vars:
+    aws_access_key: AKIASSWGW7OPWWLCVFY6
+    aws_secret_key: 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
+    region: eu-central-1
+    loggy_key_name: "timur"
+    loggy_instance_name: "loggy-instance-2"
+    required_instance_type: "t2.medium"
+    # required_instance_type: "t2.nano"
+    loggy_sg: "sg-035a655bc7dc2391a"
+    # required_instance_type: "t2.medium"
+    # Amazon Linux 2 ami ami-0e2031728ef69a466
+    # Ubuntu 22.04 ami-0caef02b518350c8b
+    loggy_image_id: "ami-0caef02b518350c8b"
+    loggy_user: "ubuntu"
+
+  tasks:
+    - name: Get current instances
+      amazon.aws.ec2_instance_info:
+      register: ec2_info
+      tags:
+        - ec2-setup
+        - test-aws-cli
+        - bug-fix
+    - name: Print state of all instances
+      ansible.builtin.debug:
+        msg:
+          - "Instance name: {{ item.tags.Name }}"
+          - "Instance URL: {{ item.public_dns_name }}"
+          - "Instance state: {{ item.state.name }}"
+      loop: "{{ ec2_info.instances }}"
+      loop_control:
+        label: "{{ item.tags.Name }}"
+      tags:
+        - bug-fix
+    - name: Provision an EC2 instance with a public IP address
+      amazon.aws.ec2_instance:
+        name: "{{ loggy_instance_name }}"
+        instance_type: "{{ required_instance_type }}"
+        state: running
+        wait: true
+        key_name: "{{ loggy_key_name }}"
+        volumes:
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 30
+              delete_on_termination: true
+        security_group: "{{ loggy_sg }}"
+        image_id: "{{ loggy_image_id }}"
+        network:
+          assign_public_ip: true
+        tags:
+          Environment: Development
+      register: result_loggy_instance
+      delegate_to: localhost
+      tags:
+        - ec2-setup
+        - elk-setup
+        - get-certs
+        - bug-fix
+
+    - name: Print the instance details
+      ansible.builtin.debug:
+        msg:
+          - Instance URL: "{{ result_loggy_instance.instances[0].public_dns_name }}"
+      tags:
+        - bug-fix
+
+    - name: Add instance to hosts
+      ansible.builtin.add_host:
+        instance_name: "{{ loggy_instance_name }}"
+        hostname: "{{ result_loggy_instance.instances[0].public_dns_name }}"
+        ansible_user: "{{ loggy_user }}"
+        groups: in_memory
+      tags:
+        - ec2-setup
+        - elk-setup
+        - get-certs
+        - bug-fix
+
+# Configuration Section
+- name: Wait for SSH connection
+  hosts: in_memory
+  vars:
+    ansible_ssh_private_key_file: ~/.ssh/timur.pem
+  gather_facts: true
+  tasks:
+    - name: Wait for SSH to come up
+      ansible.builtin.wait_for_connection:
+        delay: 120
+        timeout: 360
+        sleep: 120
+
+- name: Configure instance
+  hosts: in_memory
+  become: true
+  vars:
+    ansible_ssh_private_key_file: ~/.ssh/timur.pem
+  gather_facts: false
+  roles:
+    - role: geerlingguy.docker
+      tags:
+        - ec2-setup
+    - role: geerlingguy.pip
+      tags:
+        - ec2-setup
+  tasks:
+    - name: Install aptitude
+      ansible.builtin.apt:
+        name: aptitude=0.8.13-3ubuntu1
+        state: present
+        update_cache: true
+      tags:
+        - ec2-setup
+    - name: Install Docker Module for Python
+      ansible.builtin.pip:
+        name: docker
+      tags:
+        - ec2-setup
+    - name: Create "docker" group
+      ansible.builtin.group:
+        name: docker
+        state: present
+      tags:
+        - ec2-setup
+    - name: Add remote "ubuntu" user to "docker" group
+      ansible.builtin.user:
+        name: ubuntu
+        group: docker
+        append: true
+      tags:
+        - ec2-setup
+    - name: Apply fix for Java Memory Error
+      ansible.posix.sysctl:
+        name: vm.max_map_count
+        value: 262144
+        sysctl_set: true
+        state: present
+        reload: true
+      tags:
+        - ec2-setup
+    - name: Install Docker Compose
+      ansible.builtin.pip:
+        name: docker-compose
+      tags:
+        - ec2-setup
+    - name: Create directory for docker-compose.yml
+      ansible.builtin.file:
+        path: /home/ubuntu/elastic-docker
+        state: directory
+        owner: ubuntu
+        mode: 0770
+      tags:
+        - elk-setup
+    - name: Copy docker-compose.yml to remote host
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /home/ubuntu/elastic-docker/
+        owner: ubuntu
+        mode: 0770
+      with_fileglob:
+        - "{{ playbook_dir }}/../../elastic/docker-compose.yml"
+        - "{{ playbook_dir }}/../../elastic/docker-compose-fleet.yml"
+        - "{{ playbook_dir }}/../../elastic/.env"
+      tags:
+        - elk-setup
+    - name: Run docker-compose
+      community.docker.docker_compose:
+        project_src: /home/ubuntu/elastic-docker
+        state: present
+        pull: true
+        build: true
+      tags:
+        - elk-setup
+    - name: Fetch CA certificates from remote to localhost
+      become: true
+      become_user: root
+      become_method: sudo
+      ansible.builtin.fetch:
+        src: /var/lib/docker/volumes/elastic-docker_certs/_data/ca.zip
+        dest: "{{ playbook_dir }}/../../elastic/certs/"
+        flat: true
+      tags:
+        - get-certs
+    - name: Fetch client certificates from remote to localhost
+      become: true
+      become_user: root
+      become_method: sudo
+      ansible.builtin.fetch:
+        src: /var/lib/docker/volumes/elastic-docker_certs/_data/certs.zip
+        dest: "{{ playbook_dir }}/../../elastic/certs/"
+        flat: true
+      tags:
+        - get-certs
