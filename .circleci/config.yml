@@ -8,6 +8,13 @@ jobs:
     steps:
       - checkout
       - run: make python_ci
+  Ansible_CI:
+    machine:
+      image: ubuntu-2004:2022.10.1
+    steps:
+      - checkout
+      - run: make pyinit
+      - run: make ansible-lint
   Loggy_CI:
     machine:
       image: ubuntu-2004:2022.10.1

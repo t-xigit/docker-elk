@@ -34,6 +34,23 @@ jobs:
       - name: Run CI Target
         run: make python_ci
 
+  ansible_ci:
+    name: Ansible CI
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y python3 python3-pip python3-venv
+
+      - name: Run Init
+        run: make pyinit
+
+      - name: Run Lint
+        run: make ansible-lint
+
   test_loggy:
     name: Test suite for the loggy stack
     runs-on: ubuntu-22.04
