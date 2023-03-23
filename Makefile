@@ -42,7 +42,7 @@ help:       	## Show this help.
 ##@ Python
 .PHONY: pyinit
 pyinit:		## ✅Initialize Python Virtual Environment
-		python3.9 -m venv $(VENV)
+		python3 -m venv $(VENV)
 		$(PYTHON) -m pip install --upgrade pip
 		$(PYTHON) -m pip install -r ./python/requirements.txt
 
