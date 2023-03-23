@@ -11,16 +11,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3 python3-pip python3-venv
       - run: make python_ci
-
   Ansible_CI:
     machine:
       image: ubuntu-2004:2022.10.1
     steps:
       - checkout
-      - run: make pyinit
       - run: |
           sudo apt-get update
           sudo apt-get install -y python3 python3-pip python3-venv
+      - run: make pyinit
+      - run: make ansible-init
       - run: make ansible-lint
   Loggy_CI:
     machine:
@@ -43,4 +43,5 @@ workflows:
   build_and_test:
     jobs:
       - Python_CI
+      - Ansible_CI
       - Loggy_CI

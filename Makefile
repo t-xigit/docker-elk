@@ -77,6 +77,10 @@ python_ci:		## ✅Run all of the above
 
 ##@ Ansible
 
+.PHONY : ansible-init
+ansible-init:		## ✅Initialize Ansible
+		@echo "Initializing Ansible"
+		$(PYTHON) -m ansible galaxy install -r ./ansible/requirements.yml
 .PHONY: ansible-lint
 ansible-lint:		## ✅Run ansible-lint
 		@echo "Running ansible-lint"

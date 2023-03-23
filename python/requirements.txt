@@ -20,4 +20,5 @@ types-Jinja2
 types-click
 
 # Ansible
+ansible
 ansible-lint

@@ -47,7 +47,8 @@ jobs:
 
       - name: Run Init
         run: make pyinit
-
+      - name: Install Ansible requirements
+        run: make ansible-init
       - name: Run Lint
         run: make ansible-lint
 
