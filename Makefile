@@ -5,6 +5,7 @@ VENV :=./python/VENV
 PYTHON := $(VENV)/bin/python
 FLAKE8 := $(VENV)/bin/flake8
 PYTEST := $(VENV)/bin/pytest
+ANSIBLE-LINT := $(VENV)/bin/ansible-lint
 LOGGY := $(PYTHON) -m python.loggy		# Loggy CLI module
 LOGGY_DEV_DIR := ./loggy_deployment/deployments/	# Dir where the dev files are stored
 LOGGY_DEV_COMPOSE := -f ./loggy_deployment/deployments/loggy_dev/docker-compose.yml
@@ -41,7 +42,7 @@ help:       	## Show this help.
 ##@ Python
 .PHONY: pyinit
 pyinit:		## ✅Initialize Python Virtual Environment
-		python3 -m venv $(VENV)
+		python3.9 -m venv $(VENV)
 		$(PYTHON) -m pip install --upgrade pip
 		$(PYTHON) -m pip install -r ./python/requirements.txt
 
@@ -72,6 +73,15 @@ python_ci:		## ✅Run all of the above
 	@make pylint
 	@make type_check
 	@make pytest
+
+
+##@ Ansible
+
+.PHONY: ansible-lint
+ansible-lint:		## ✅Run ansible-lint
+		@echo "Running ansible-lint"
+		$(ANSIBLE-LINT) ./ansible/ansible-ec2/playbook.yml
+		$(ANSIBLE-LINT) ./ansible/ansible-pi/playbook.yml
 
 ##@ Loggy
 
