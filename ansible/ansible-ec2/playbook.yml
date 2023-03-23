@@ -182,15 +182,15 @@
         single_branch: true
         version: loggy
     - name: Run pyinit
-      ansible.builtin.make:
+      community.general.make:
         chdir: /home/ubuntu/docker-elk
         target: pyinit
     - name: Bring up the Loggy Stack
-      ansible.builtin.make:
+      community.general.make:
         chdir: /home/ubuntu/docker-elk
         target: loggy-make
     - name: Test the Loggy Stack
-      ansible.builtin.make:
+      community.general.make:
         chdir: /home/ubuntu/docker-elk
         target: loggy-test
         params:
@@ -198,8 +198,6 @@
       tags:
         - elk-test
     - name: Add the Test Agent
-      ansible.builtin.make:
+      community.general.make:
         chdir: /home/ubuntu/docker-elk
         target: loggy-agent-add
-
-
