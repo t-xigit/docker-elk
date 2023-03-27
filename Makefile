@@ -91,7 +91,7 @@ ansible-init:		## ✅Initialize Ansible
 .PHONY: ansible-yaml-lint
 ansible-yaml-lint:		## ✅Run yaml lint
 		@echo "Running yaml lint"
-		$(YAML-LINT) ./ansible/ansible-ec2/aws-ec2-inventory.yml
+		$(YAML-LINT) ./ansible/ansible-ec2/aws_ec2.yml
 		$(YAML-LINT) ./ansible/ansible-ec2/playbook.yml
 
 .PHONY: ansible-lint
