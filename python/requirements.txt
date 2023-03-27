@@ -5,12 +5,14 @@ pytest-mock
 pytest-cov
 
 flake8
+yamllint
 requests
 Jinja2
 requests
 pyyaml
 pathlib
 click
+boto3
 
 # Packages for type checking
 mypy

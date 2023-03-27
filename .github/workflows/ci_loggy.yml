@@ -50,7 +50,7 @@ jobs:
       - name: Install Ansible requirements
         run: make ansible-init
       - name: Run Lint
-        run: make ansible-lint
+        run: make ansible-ci
 
   test_loggy:
     name: Test suite for the loggy stack

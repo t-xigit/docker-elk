@@ -28,7 +28,6 @@
       tags:
         - ec2-setup
         - test-aws-cli
-        - bug-fix
         - elk-test
     - name: Print state of all instances
       ansible.builtin.debug:
@@ -40,7 +39,6 @@
       loop_control:
         label: "{{ item.tags.Name }}"
       tags:
-        - bug-fix
         - test-aws-cli
         - elk-test
     - name: Provision an EC2 instance with a public IP address
@@ -67,7 +65,6 @@
         - ec2-setup
         - elk-setup
         - get-certs
-        - bug-fix
         - elk-test
 
     - name: Print the instance details
@@ -75,7 +72,6 @@
         msg:
           - Instance URL: "{{ result_loggy_instance.instances[0].public_dns_name }}"
       tags:
-        - bug-fix
         - elk-test
 
     - name: Add instance to hosts
@@ -88,7 +84,6 @@
         - ec2-setup
         - elk-setup
         - get-certs
-        - bug-fix
         - elk-test
 
 # Configuration Section

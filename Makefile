@@ -5,6 +5,8 @@ VENV :=./python/VENV
 PYTHON := $(VENV)/bin/python
 FLAKE8 := $(VENV)/bin/flake8
 PYTEST := $(VENV)/bin/pytest
+ANSIBLE := $(VENV)/bin/ansible
+YAML-LINT := $(VENV)/bin/yamllint
 ANSIBLE-LINT := $(VENV)/bin/ansible-lint
 LOGGY := $(PYTHON) -m python.loggy		# Loggy CLI module
 LOGGY_DEV_DIR := ./loggy_deployment/deployments/	# Dir where the dev files are stored
@@ -76,16 +78,39 @@ python_ci:		## ✅Run all of the above
 
 
 ##@ Ansible
+.PHONY: ansible-version
+ansible-version:		## ✅Show Ansible Version
+		@echo "Ansible Version"
+		$(ANSIBLE) --version
 
-.PHONY : ansible-init
+.PHONY: ansible-init
 ansible-init:		## ✅Initialize Ansible
 		@echo "Initializing Ansible"
 		$(PYTHON) -m ansible galaxy install -r ./ansible/requirements.yml
+
+.PHONY: ansible-yaml-lint
+ansible-yaml-lint:		## ✅Run yaml lint
+		@echo "Running yaml lint"
+		$(YAML-LINT) ./ansible/ansible-ec2/aws-ec2-inventory.yml
+		$(YAML-LINT) ./ansible/ansible-ec2/playbook.yml
+
 .PHONY: ansible-lint
 ansible-lint:		## ✅Run ansible-lint
 		@echo "Running ansible-lint"
 		$(ANSIBLE-LINT) ./ansible/ansible-ec2/playbook.yml
-		#$(ANSIBLE-LINT) ./ansible/ansible-pi/playbook.yml
+
+.PHONY: ansible-syntac-check
+ansible-syntac-check:		## ✅Run ansible-playbook --syntax-check
+		@echo "Running ansible-playbook --syntax-check"
+		$(ANSIBLE)-playbook --syntax-check ./ansible/ansible-ec2/playbook.yml
+		#$(ANSIBLE)-playbook --syntax-check ./ansible/ansible-pi/playbook.yml
+
+.PHONY: ansible-ci
+ansible-ci:		## ✅Run all of the above
+		@echo "Running ansible-ci"
+		@make ansible-yaml-lint
+		@make ansible-init
+		@make ansible-syntac-check
 
 .PHONY: ansible-aws-test
 ansible-aws-test:		## ✅Test the AWS credentials
